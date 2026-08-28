@@ -1,0 +1,115 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "seasia.gamelan.slendro-kanyut-mesem",
+      "name": "Slendro (Kyahi Kanyut Mesem, Mangkunegaran, Surakarta)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 223, 475.6, 711.8, 937.1],
+      "notatable": false,
+      "source": "Surjodiningrat, Sudarjana & Susanto (1972), 'Tone Measurements of Outstanding Javanese Gamelans in Yogyakarta and Surakarta' (Gadjah Mada University Press; English translation of 'Penjelidikan dalam pengukuran nada gamelan-gamelan djawa terkemuka di Jogjakarta dan Surakarta'). Cents as reported in finding S2 of this project's independent plan review of 2026-08-26; not re-verified against the printed book. Corroborated to within 2.5 cents by Jaap Kunst's measurement of the same gamelan as tabulated by Larry Polansky, 'Interval Sizes in Javanese Slendro' (steps 224 / 253.5 / 237.5 / 232.5 / 264, measured octave 1211.5 cents), reproduced at microtonaltheory.com, 'Indonesian Gamelan' (https://www.microtonaltheory.com/microtonal-ethnography/indonesian-gamelan).",
+      "description": "A measured tuning of one named gamelan, not a definition of slendro: there is no Javanese standard form, and Surjodiningrat's survey found individual steps running from 206 to 268.5 cents across the gamelan measured. Degrees are stated here against an exact 1200-cent octave; the instrument's own octave is stretched to roughly 1205-1212 cents, which this model cannot represent, so the interval from the top degree back to the tonic is narrower here than on the gamelan."
+    },
+    {
+      "id": "seasia.gamelan.slendro-udan-mas",
+      "name": "Slendro (Udan Mas, octave-normalised)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 266.9, 510.4, 745.8, 996.1],
+      "notatable": false,
+      "source": "Surjodiningrat, Sudarjana & Susanto (1972), 'Tone Measurements of Outstanding Javanese Gamelans in Yogyakarta and Surakarta' (Gadjah Mada University Press). Cents as reported in finding S2 of this project's independent plan review of 2026-08-26; not independently re-verified against the printed book, and this gamelan is not among the eight Kunst sets tabulated by Polansky, so no second reading corroborates it.",
+      "description": "A second measured gamelan, shipped precisely because it disagrees with Kyahi Kanyut Mesem: the first step is 267 cents here against 223 there, a 44-cent difference between two tunings that are both unarguably slendro. Degrees are stated against an exact 1200-cent octave; the measured octave of a Javanese gamelan is stretched, and that stretch is out of scope for this version."
+    },
+    {
+      "id": "seasia.gamelan.slendro-madukentir",
+      "name": "Slendro (Madukentir, widest first step, octave-normalised)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 267.5, 508.6, 750.7, 979.8],
+      "notatable": false,
+      "source": "Jaap Kunst's measurement of gamelan Madukentir, step sizes 268.5 / 242 / 243 / 230 / 221 cents over a measured octave of 1204.5 cents, as tabulated by Larry Polansky, 'Interval Sizes in Javanese Slendro', reproduced at microtonaltheory.com, 'Indonesian Gamelan' (https://www.microtonaltheory.com/microtonal-ethnography/indonesian-gamelan). Degrees here are the cumulative steps scaled by 1200/1204.5.",
+      "description": "Carries the largest single step in the surveyed corpus, 268.5 cents. Shipped alongside Surak, which carries the smallest, so the library shows the documented spread of slendro rather than an average that no gamelan plays. Octave-normalised from the measured 1204.5 cents to exactly 1200."
+    },
+    {
+      "id": "seasia.gamelan.slendro-surak",
+      "name": "Slendro (Surak, narrowest first step, octave-normalised)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 205.1, 435.5, 672.9, 936.7],
+      "notatable": false,
+      "source": "Jaap Kunst's measurement of gamelan Surak, step sizes 206 / 231.5 / 238.5 / 265 / 264.5 cents over a measured octave of 1205.5 cents, as tabulated by Larry Polansky, 'Interval Sizes in Javanese Slendro', reproduced at microtonaltheory.com, 'Indonesian Gamelan' (https://www.microtonaltheory.com/microtonal-ethnography/indonesian-gamelan). Degrees here are the cumulative steps scaled by 1200/1205.5.",
+      "description": "Carries the smallest single step in the surveyed corpus, 206 cents, and the steps grow steadily upward - the opposite contour to Madukentir. Octave-normalised from the measured 1205.5 cents to exactly 1200."
+    },
+    {
+      "id": "seasia.gamelan.slendro-equidistant",
+      "name": "Slendro (idealised 5-equal)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 240, 480, 720, 960],
+      "notatable": false,
+      "source": "Idealisation, not a measurement: the octave divided into five equal steps of 240 cents. The equidistant model of slendro is the textbook simplification criticised in Surjodiningrat, Sudarjana & Susanto (1972), whose survey of Javanese gamelan found steps from 206 to 268.5 cents, and in Larry Polansky, 'Interval Sizes in Javanese Slendro'.",
+      "description": "Explicitly an idealisation and labelled as one. No gamelan is tuned this way; it is included because it is the form most listeners and most software mean by 'slendro', and because having it next to four measured tunings makes the gap visible. It is still 40 cents from 12-TET at its worst degree."
+    },
+    {
+      "id": "seasia.gamelan.pelog-selisir-gladag",
+      "name": "Pelog selisir, 5-tone (Gong Gladag, Badung, Bali, octave-normalised)",
+      "tradition": "Balinese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 130.7, 273.5, 554.7, 778.6],
+      "notatable": false,
+      "source": "Andrew Toth's field measurements of the gamelan of Gladag, Badung regency, as published in Wayne Vitale & William Sethares, 'Balinese Gamelan Tuning: The Toth Archives', Analytical Approaches to World Music 9.2 (2021), Figure 12 - third octave, means of the pengumbang frequencies: 552.9, 596.6, 648.3, 763.6, 869.9, 1111.7 Hz. Degrees computed from those frequencies (measured octave 1209.2 cents) and scaled by 1200/1209.2. Selisir identified as a five-tone mode of the parent seven-tone pelog scale in the same article, after McPhee (1966).",
+      "description": "A measured tuning, and a five-tone subset rather than the whole system: selisir is one mode of the seven-tone pelog, the two remaining tones falling in the wide gaps at roughly 400 and 950 cents. Octave-normalised from the measured 1209.2 cents. Balinese gamelan are also tuned in paired sets deliberately detuned against each other (pengumbang and pengisep) to produce beating; only the pengumbang half is represented here, so the shimmer of the real ensemble is absent by construction."
+    },
+    {
+      "id": "seasia.gamelan.pelog-bem-alves-just",
+      "name": "Pelog bem, 5-tone (Alves just-intonation reconstruction)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 231.17, 315.64, 701.96, 813.69],
+      "notatable": false,
+      "source": "Bill Alves, 'Pleng: Composing for a Justly Tuned Gender Barung' (https://pages.hmc.edu/alves/pleng.html), pelog bem tuning: steps 8/7, 21/20, 5/4, 16/15, 5/4, i.e. 231.17 / 84.47 / 386.31 / 111.73 / 386.31 cents. A composer's just-intonation reconstruction devised for a specific instrument, informed by Javanese practice - not a measurement of any gamelan.",
+      "description": "Labelled as a reconstruction, not a reference measurement. Pelog is a seven-tone system and this is the five-tone pathet subset using degrees 1 2 3 5 6 (pathet lima and pathet nem); the omitted degrees 4 and 7 are absent from the keyboards of many instruments. Being a just construction it closes at exactly 1200 cents, so no octave normalisation was applied or needed."
+    },
+    {
+      "id": "seasia.gamelan.pelog-barang-alves-just",
+      "name": "Pelog barang, 5-tone (Alves just-intonation reconstruction)",
+      "tradition": "Javanese gamelan",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 386.31, 470.78, 857.09, 986.83],
+      "notatable": false,
+      "source": "Bill Alves, 'Pleng: Composing for a Justly Tuned Gender Barung' (https://pages.hmc.edu/alves/pleng.html), pelog barang tuning taken from pitch 7: steps 5/4, 21/20, 5/4, 16/15, 8/7, i.e. 386.31 / 84.47 / 386.31 / 111.73 / 231.17 cents. A composer's just-intonation reconstruction, not a measurement.",
+      "description": "The same underlying tuning as the pelog bem entry, read from a different tonic: pathet barang uses degrees 7 2 3 5 6 rather than 1 2 3 5 6. Shipped as a second pathet subset so that changing pathet is a choice in the library rather than something the user has to fake by transposing. Closes at exactly 1200 cents by construction."
+    },
+    {
+      "id": "seasia.thai.equidistant-ellis",
+      "name": "Thai 7-tone (idealised equidistant, Ellis 1885)",
+      "tradition": "Thai classical (phleng Thai doem)",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 171.429, 342.857, 514.286, 685.714, 857.143, 1028.571],
+      "notatable": false,
+      "source": "Alexander J. Ellis (1885), 'On the Musical Scales of Various Nations', Journal of the Society of Arts 33, p. 1105: the octave divided into 'seven equal intervals each containing 171.43 cents'. Documented and criticised in John Garzoli, 'The Myth of Equidistance in Thai Tuning', Analytical Approaches to World Music 4.2 (2015), pp. 4-5.",
+      "description": "An idealisation and labelled as one. Ellis's own instrument measurements were already 32.5 and 63.3 cents away from the fourth his theory predicts, and Garzoli's re-analysis of Morton's data finds real intervals running from about 80 cents below to 40 cents above the theoretical 171.429. Shipped because a century of writing on Thai music assumes it, not because any ensemble plays it."
+    },
+    {
+      "id": "seasia.thai.ranat-ek-morton",
+      "name": "Thai 7-tone (measured ranat ek, Morton 1976, octave-normalised)",
+      "tradition": "Thai classical (phleng Thai doem)",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 182.1, 346.6, 517.7, 673.1, 857.2, 1020.2],
+      "notatable": false,
+      "source": "David Morton (1976), 'The Traditional Music of Thailand', p. 237 Table E - Stroboconn readings for ranat ek bars 14 to 21: 604, 672, 740, 818, 896, 998, 1098, 1220 Hz - as reproduced and re-analysed in John Garzoli, 'The Myth of Equidistance in Thai Tuning', Analytical Approaches to World Music 4.2 (2015), Table A. Degrees computed from those frequencies (measured octave 1217.1 cents) and scaled by 1200/1217.1.",
+      "description": "A measured Thai octave, and audibly not equidistant: the steps run 184.7, 166.9, 173.5, 157.7, 186.7, 165.3 and 182.4 cents before normalisation, a spread of 29 cents. Garzoli notes the octave itself is stretched to 1217 cents, which this model cannot carry, so the tuning is compressed to a 1200-cent octave here and every degree is proportionally flattened by about 1.4 percent."
+    },
+    {
+      "id": "seasia.thai.khawng-wong-lek-morton",
+      "name": "Thai 7-tone (measured khawng wong lek, Morton 1976, octave-normalised)",
+      "tradition": "Thai classical (phleng Thai doem)",
+      "region": "Southeast Asia",
+      "degreeCents": [0, 165.8, 344.4, 506, 668.7, 848, 1028.6],
+      "notatable": false,
+      "source": "David Morton (1976), 'The Traditional Music of Thailand', p. 237 Table E - Stroboconn readings for khawng wong lek gongs 1 to 8: 602, 664, 738, 812, 894, 994, 1106, 1224 Hz - as reproduced and re-analysed in John Garzoli, 'The Myth of Equidistance in Thai Tuning', Analytical Approaches to World Music 4.2 (2015), Table B. Degrees computed from those frequencies (measured octave 1228.5 cents) and scaled by 1200/1228.5.",
+      "description": "The gong-circle tuning from the same ensemble as the ranat ek entry, shipped separately because it does not agree with it: Garzoli shows the two instruments differ by 19.5 cents on one interval alone, and averaging them - as Morton's published means do - invents a tuning that neither instrument has. The measured octave is stretched to 1228.5 cents and is compressed to 1200 here."
+    }
+  ]
+}

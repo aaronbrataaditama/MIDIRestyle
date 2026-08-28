@@ -1,0 +1,165 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "middleeast.arabic.maqam-rast",
+      "name": "Maqam Rast (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 350, 500, 700, 900, 1050],
+      "notatable": true,
+      "source": "Notated form: C D E-half-flat F G A B-half-flat, i.e. jins Rast on C plus jins Rast on G, read in the 24-quarter-tone convention standardised at the 1932 Cairo Congress of Arab Music (one quarter-tone = 50 cents). Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Maqam Rast (https://www.maqamworld.com/en/maqam/rast.php).",
+      "description": "The notated tuning, not a measurement. Performance clusters the neutral third around 340-370 cents rather than an exact 350, and the descending seventh is normally played as a plain B-flat (1000 cents) rather than B-half-flat. Two cited just-intonation alternatives ship alongside this entry."
+    },
+    {
+      "id": "middleeast.arabic.maqam-rast-just-arab",
+      "name": "Maqam Rast (just, Arab tuning after Schulter)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 203.91, 354.547, 498.045, 701.955, 905.865, 1056.502],
+      "notatable": true,
+      "source": "Margo Schulter's 'Arab Rast' jins as 9/8 * 12/11 * 88/81 (204 / 151 / 143 cents), tabulated at microtonaltheory.com, 'Just Tuning of Arabic Ajnas' (https://www.microtonaltheory.com/microtonal-ethnography/just-tuning-of-arabic-ajnas_1). The same jins is taken again on the fifth (3/2), which is how maqam Rast is built.",
+      "description": "A just-intonation reading in which the neutral third falls at 354.5 cents rather than the notated 350. Ships as an alternative to the notated form, not as a replacement: Arab intonation of Rast varies by region and by performer."
+    },
+    {
+      "id": "middleeast.arabic.maqam-rast-just-syrian",
+      "name": "Maqam Rast (just, High Syrian tuning after Schulter)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 203.91, 369.747, 498.045, 701.955, 905.865, 1071.702],
+      "notatable": true,
+      "source": "Margo Schulter's 'High Syrian Rast' jins as 9/8 * 208/189 * 14/13 (204 / 166 / 128 cents), tabulated at microtonaltheory.com, 'Just Tuning of Arabic Ajnas' (https://www.microtonaltheory.com/microtonal-ethnography/just-tuning-of-arabic-ajnas_1). Jins repeated on the fifth (3/2).",
+      "description": "The Syrian practice of a distinctly higher neutral third (369.7 cents) against the Egyptian preference for a lower one. Shipping both makes the regional disagreement visible rather than hiding it behind one averaged number."
+    },
+    {
+      "id": "middleeast.arabic.maqam-bayati",
+      "name": "Maqam Bayati (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Notated form: D E-half-flat F G A B-flat C, i.e. jins Bayati on D plus jins Nahawand on G, in the 24-quarter-tone convention (one quarter-tone = 50 cents). Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Maqam Bayati (https://www.maqamworld.com/en/maqam/bayati.php).",
+      "description": "The notated tuning. Bayati's second degree is normally performed lower than the notated 150 cents; see the just variant shipped alongside."
+    },
+    {
+      "id": "middleeast.arabic.maqam-bayati-just",
+      "name": "Maqam Bayati (just, Arab tuning after Schulter)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 138.573, 294.135, 498.045, 701.955, 792.18, 996.09],
+      "notatable": true,
+      "source": "Margo Schulter's 'Arab Bayati' jins as 13/12 * 128/117 * 9/8, tabulated at microtonaltheory.com, 'Just Tuning of Arabic Ajnas' (https://www.microtonaltheory.com/microtonal-ethnography/just-tuning-of-arabic-ajnas_1). Upper tetrachord Pythagorean: 3/2, 256/243 and 32/27 above it.",
+      "description": "Second degree at 138.6 cents (13/12), a little below the notated quarter-tone. The upper tetrachord is Pythagorean; the source tabulates only the lower jins, so the completion is stated here rather than implied."
+    },
+    {
+      "id": "middleeast.arabic.maqam-hijaz-notated",
+      "name": "Maqam Hijaz (notated, 12-TET)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 100, 400, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Notated form: D E-flat F-sharp G A B-flat C, i.e. jins Hijaz on D plus jins Nahawand on G. Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Maqam Hijaz and Jins Hijaz (https://www.maqamworld.com/en/jins/hijaz.php).",
+      "description": "This is the notated 12-TET form and is deliberately labelled as such. maqamworld states of jins Hijaz: 'The interval between the 2nd and 3rd degrees is usually played smaller than notated by raising the 2nd a little and lowering the 3rd a little' - so this entry is pitch-identical to the Western Phrygian dominant and is NOT how Hijaz is performed. Two cited microtonal Hijaz tunings ship alongside it."
+    },
+    {
+      "id": "middleeast.arabic.maqam-hijaz-just-goldrick",
+      "name": "Maqam Hijaz (performed intonation, Goldrick just tuning)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 128.298, 386.314, 498.045, 701.955, 792.18, 996.09],
+      "notatable": true,
+      "source": "Navid Goldrick's just tuning of jins Hijaz, 14/13 * 65/56 * 16/15 (128 / 258 / 112 cents), with the cited performance ranges 125-135 cents for the 2nd and 375-385 cents for the 3rd; tabulated at microtonaltheory.com, 'Just Tuning of Arabic Ajnas' (https://www.microtonaltheory.com/microtonal-ethnography/just-tuning-of-arabic-ajnas_1). Upper tetrachord Pythagorean: 3/2, 256/243 and 32/27 above it.",
+      "description": "The 2nd raised to 128 cents and the 3rd lowered to 386, narrowing the augmented second from the notated 300 cents to 258 - which is what maqamworld describes qualitatively. Sources disagree about how far: al-Shirazi's 13th-century tuning moves both degrees the other way. The upper tetrachord is Pythagorean; the source tabulates only the lower jins."
+    },
+    {
+      "id": "middleeast.arabic.maqam-hijaz-shirazi",
+      "name": "Maqam Hijaz (Qutb al-Din al-Shirazi, 13th century)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 150.637, 417.508, 498.045, 701.955, 792.18, 996.09],
+      "notatable": true,
+      "source": "Jins Hijaz attributed to Qutb al-Din al-Shirazi (13th c.) as 12/11 * 7/6 * 22/21 (151 / 267 / 81 cents), tabulated at microtonaltheory.com, 'Just Tuning of Arabic Ajnas' (https://www.microtonaltheory.com/microtonal-ethnography/just-tuning-of-arabic-ajnas_1). Upper tetrachord Pythagorean: 3/2, 256/243 and 32/27 above it.",
+      "description": "The historical 11-limit reading: second at 12/11 (150.6 cents) and third at 14/11 (417.5), widening rather than narrowing the augmented second. Directly contradicts the modern performed tuning shipped alongside it; both are cited and neither is presented as the correct one."
+    },
+    {
+      "id": "middleeast.arabic.maqam-sikah",
+      "name": "Maqam Sikah (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 350, 550, 750, 850, 1050],
+      "notatable": true,
+      "source": "Notated form on the pitch Sikah (E-half-flat): E-half-flat F G A B C D, in the 24-quarter-tone convention (one quarter-tone = 50 cents). Maqam identity after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "Rooted on the half-flat degree itself, so every remaining pitch is a quarter-tone away from the 12-TET grid. Abu Shumays notes that the Sikah pitch is the most negotiable in the whole system - ensembles agree on it before playing - so treat this as a notated centre, not a fixed pitch."
+    },
+    {
+      "id": "middleeast.arabic.maqam-huzam",
+      "name": "Maqam Huzam (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 350, 450, 750, 850, 1050],
+      "notatable": true,
+      "source": "Notated form on the pitch Sikah (E-half-flat): jins Sikah (E-half-flat F G) plus jins Hijaz on G (G A-flat B C), continuing to D, in the 24-quarter-tone convention. Jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "Sikah below, Hijaz above - the augmented second between the 4th and 5th degrees is the sound of the maqam. Notated tuning only; the Sikah pitch itself varies in performance."
+    },
+    {
+      "id": "middleeast.arabic.maqam-saba",
+      "name": "Maqam Saba (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 300, 400, 700, 800, 1000],
+      "notatable": true,
+      "source": "Notated form: D E-half-flat F G-flat A B-flat C, i.e. jins Saba on D plus jins Hijaz on F, in the 24-quarter-tone convention. Jins composition after Farraj & Abu Shumays, maqamworld.com, Maqam Saba (https://www.maqamworld.com/en/maqam/saba.php).",
+      "description": "The diminished fourth at 400 cents is what makes Saba Saba. Note a real limitation: Saba does not repeat cleanly at the octave in performance - the upper octave is normally flattened - and this app's model forces exact 1200-cent periodicity, so the octave behaviour is not reproduced."
+    },
+    {
+      "id": "middleeast.arabic.maqam-nahawand",
+      "name": "Maqam Nahawand (notated, 12-TET)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Notated form: C D E-flat F G A-flat B-flat, i.e. jins Nahawand on C plus jins Kurd on G. Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "A genuinely 12-TET maqam - it uses no quarter-tones - and therefore pitch-identical to the Western natural minor. Kept because Nahawand is a principal maqam with its own melodic behaviour, but it is a duplicate pitch set, not an independent tuning."
+    },
+    {
+      "id": "middleeast.arabic.maqam-kurd",
+      "name": "Maqam Kurd (notated, 12-TET)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 100, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Notated form: D E-flat F G A B-flat C, i.e. jins Kurd on D plus jins Kurd on G. Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "No quarter-tones, so pitch-identical to the Western Phrygian mode. Shipped for completeness of the maqam family; it is a duplicate pitch set, not an independent tuning."
+    },
+    {
+      "id": "middleeast.arabic.maqam-ajam",
+      "name": "Maqam Ajam (notated, 12-TET)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 400, 500, 700, 900, 1100],
+      "notatable": true,
+      "source": "Notated form: B-flat C D E-flat F G A, i.e. jins Ajam plus jins Ajam on the fifth. Maqam identity and jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "Pitch-identical to the Western major scale - Ajam differs from major in melodic behaviour and modulation, not in tuning. Shipped so the maqam family is complete, but it adds no new pitch set."
+    },
+    {
+      "id": "middleeast.arabic.maqam-suznak",
+      "name": "Maqam Suznak (notated, 24-quarter-tone)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 350, 500, 700, 800, 1100],
+      "notatable": true,
+      "source": "Notated form: C D E-half-flat F G A-flat B, i.e. jins Rast on C plus jins Hijaz on G, in the 24-quarter-tone convention. Jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "Rast below, Hijaz above. Notated tuning; the neutral third is subject to the same regional variation as in Rast."
+    },
+    {
+      "id": "middleeast.arabic.maqam-nikriz",
+      "name": "Maqam Nikriz (notated, 12-TET)",
+      "tradition": "Arabic maqam",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 300, 600, 700, 900, 1000],
+      "notatable": true,
+      "source": "Notated form: C D E-flat F-sharp G A B-flat, i.e. jins Nikriz on C plus a Nahawand-family upper tetrachord. Jins composition after Farraj & Abu Shumays, maqamworld.com, Arabic Jins (https://www.maqamworld.com/en/jins.php).",
+      "description": "No quarter-tones in the Arabic notated form. The Ottoman AEU reading of the same jins is genuinely microtonal - see makam Nikriz in the Turkish library, whose third degree sits at 317 cents rather than 300."
+    }
+  ]
+}

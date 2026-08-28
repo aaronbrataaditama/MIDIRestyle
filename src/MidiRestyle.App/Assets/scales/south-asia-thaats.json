@@ -1,0 +1,105 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "southasia.hindustani.bilawal",
+      "name": "Bilawal",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 200, 400, 500, 700, 900, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "All shuddh (natural) swaras; corresponds to the Western major scale / Ionian. The reference thaat of Bhatkhande's ten-thaat classification."
+    },
+    {
+      "id": "southasia.hindustani.khamaj",
+      "name": "Khamaj",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 200, 400, 500, 700, 900, 1000],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Bilawal with komal (flat) Ni; corresponds to Mixolydian."
+    },
+    {
+      "id": "southasia.hindustani.kafi",
+      "name": "Kafi",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 200, 300, 500, 700, 900, 1000],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Khamaj with komal Ga added; corresponds to Dorian."
+    },
+    {
+      "id": "southasia.hindustani.asavari",
+      "name": "Asavari",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 200, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Kafi with komal Dha added; corresponds to Aeolian (natural minor)."
+    },
+    {
+      "id": "southasia.hindustani.bhairavi",
+      "name": "Bhairavi",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 100, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Asavari with komal Re added, so Re, Ga, Dha and Ni are all komal; corresponds to Phrygian."
+    },
+    {
+      "id": "southasia.hindustani.bhairav",
+      "name": "Bhairav",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 100, 400, 500, 700, 800, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Komal Re and komal Dha, all else shuddh; corresponds to the Western double-harmonic-family scale with a natural third."
+    },
+    {
+      "id": "southasia.hindustani.kalyan",
+      "name": "Kalyan",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 200, 400, 600, 700, 900, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Bilawal with tivra (sharp) Ma in place of shuddh Ma; corresponds to Lydian."
+    },
+    {
+      "id": "southasia.hindustani.marwa",
+      "name": "Marwa",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 100, 400, 600, 700, 900, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Komal Re and tivra Ma, all else shuddh."
+    },
+    {
+      "id": "southasia.hindustani.poorvi",
+      "name": "Poorvi",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 100, 400, 600, 700, 800, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Komal Re, tivra Ma and komal Dha."
+    },
+    {
+      "id": "southasia.hindustani.todi",
+      "name": "Todi",
+      "tradition": "Hindustani (North Indian) Classical",
+      "region": "South Asia",
+      "degreeCents": [0, 100, 300, 600, 700, 800, 1100],
+      "notatable": true,
+      "source": "Jairazbhoy, N.A. (1971). The Rags of North Indian Music: Their Structure and Evolution. London: Faber & Faber.",
+      "description": "Komal Re, komal Ga, tivra Ma and komal Dha - the most heavily altered thaat, notating with a double-flat-equivalent chain of accidentals."
+    }
+  ]
+}

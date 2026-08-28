@@ -1,0 +1,95 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "africa.ethiopia.tizita-major",
+      "name": "Tizita, major (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 200, 400, 700, 900],
+      "notatable": true,
+      "source": "C D E G A, from Ezra Abate, 'Ethiopian Kiñit (scales): Analysis of the Formation and Structure of the Ethiopian Scale System', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009), as summarised by Dawit Tegbaru, 'Ethiopian Music Modes (Kiñit)' (https://music-of-ethiopia.pubpub.org/pub/v1v1u0fy/release/2).",
+      "description": "Deliberately a 12-TET pitch set: Ezra Abate's standardisation notates the kiñit on the Western staff. Weisser & Falceto, 'Investigating qəñət in Amhara secular music: an acoustic and historical study' (Annales d'Éthiopie 28, 2013), measured actual performance and found intervals that do not sit on this grid, so treat these as notated modes rather than measured tunings."
+    },
+    {
+      "id": "africa.ethiopia.tizita-minor",
+      "name": "Tizita, minor (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 200, 300, 700, 800],
+      "notatable": true,
+      "source": "C D E-flat G A-flat, from Ezra Abate, 'Ethiopian Kiñit (scales)', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009), as summarised by Dawit Tegbaru, 'Ethiopian Music Modes (Kiñit)' (https://music-of-ethiopia.pubpub.org/pub/v1v1u0fy/release/2).",
+      "description": "The minor form of the tizita mode, notated in 12-TET. As with all four kiñit, the notated pitch set is a standardisation of an orally transmitted practice; measured performance (Weisser & Falceto 2013) departs from it."
+    },
+    {
+      "id": "africa.ethiopia.bati-major",
+      "name": "Bati, major (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 400, 500, 700, 1100],
+      "notatable": true,
+      "source": "C E F G B, from Ezra Abate, 'Ethiopian Kiñit (scales)', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009), as summarised by Dawit Tegbaru, 'Ethiopian Music Modes (Kiñit)' (https://music-of-ethiopia.pubpub.org/pub/v1v1u0fy/release/2).",
+      "description": "Notated 12-TET form. Sources vary on bati: some list it as C D F G A. Abate's spelling is used because it is the published standardisation the other descriptions derive from."
+    },
+    {
+      "id": "africa.ethiopia.bati-minor",
+      "name": "Bati, minor (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 300, 500, 700, 1000],
+      "notatable": true,
+      "source": "C E-flat F G B-flat, from Ezra Abate, 'Ethiopian Kiñit (scales)', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009), as summarised by Dawit Tegbaru, 'Ethiopian Music Modes (Kiñit)' (https://music-of-ethiopia.pubpub.org/pub/v1v1u0fy/release/2).",
+      "description": "Notated 12-TET form; pitch-identical to the Western minor pentatonic, which is a fact about the notation rather than about the music."
+    },
+    {
+      "id": "africa.ethiopia.ambassel",
+      "name": "Ambassel (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 100, 500, 700, 800],
+      "notatable": true,
+      "source": "C D-flat F G A-flat, from Ezra Abate, 'Ethiopian Kiñit (scales)', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009); the same pitch set is given in Wikipedia, 'Ambassel scale' (https://en.wikipedia.org/wiki/Ambassel_scale).",
+      "description": "Notated 12-TET form. Ambassel is the kiñit whose intonation varies most in practice - its second and third degrees are commonly reported as sitting between the notated pitches - so the 12-TET spelling is the least faithful of the four."
+    },
+    {
+      "id": "africa.ethiopia.anchihoye",
+      "name": "Anchihoye (kiñit)",
+      "tradition": "Ethiopian kiñit",
+      "region": "Africa",
+      "degreeCents": [0, 100, 500, 600, 900],
+      "notatable": true,
+      "source": "C D-flat F G-flat A, from Ezra Abate, 'Ethiopian Kiñit (scales)', Proceedings of the 16th International Conference of Ethiopian Studies (Trondheim, 2009), as summarised by Dawit Tegbaru, 'Ethiopian Music Modes (Kiñit)' (https://music-of-ethiopia.pubpub.org/pub/v1v1u0fy/release/2).",
+      "description": "Notated 12-TET form. Anchihoye is the least standardised of the four kiñit and other published spellings disagree; Abate's is used throughout this file for consistency of provenance."
+    },
+    {
+      "id": "africa.subsaharan.equiheptatonic",
+      "name": "Equiheptatonic (7-equal), Chopi timbila / West African idealisation",
+      "tradition": "Sub-Saharan African equal-step",
+      "region": "Africa",
+      "degreeCents": [0, 171.429, 342.857, 514.286, 685.714, 857.143, 1028.571],
+      "notatable": false,
+      "source": "Seven equal steps of 1200/7 = 171.4286 cents. Proposed for West and Central African xylophone tunings by A. M. Jones, Studies in African Music (Oxford University Press, 1959), and measured on Chopi timbila by Hugh Tracey, Chopi Musicians: Their Music, Poetry and Instruments (Oxford University Press for the International African Institute, 1948).",
+      "description": "An idealisation, explicitly labelled. Real timbila sets vary by roughly 20 cents either side of exact equidistance, and A. M. Jones's equiheptatonic claim for West Africa has been contested since he made it. Not notatable: every degree but the tonic falls between two letter names, and the culturally appropriate notation is cipher, not a staff. Pitch-identical to the Ellis idealisation of Thai tuning in the Southeast Asia library - the two traditions are unrelated and the coincidence is arithmetic, not historical."
+    },
+    {
+      "id": "africa.subsaharan.equipentatonic",
+      "name": "Equipentatonic (5-equal), Central & Southern African idealisation",
+      "tradition": "Sub-Saharan African equal-step",
+      "region": "Africa",
+      "degreeCents": [0, 240, 480, 720, 960],
+      "notatable": false,
+      "source": "Five equal steps of 1200/5 = 240 cents. The equidistant-pentatonic model for Central and Southern African xylophone and lamellophone tunings, from Hugh Tracey's instrument measurements in Chopi Musicians: Their Music, Poetry and Instruments (Oxford University Press for the International African Institute, 1948), and A. M. Jones, Studies in African Music (Oxford University Press, 1959).",
+      "description": "An idealisation, explicitly labelled - no measured instrument is exactly 5-equal. Not notatable: the culturally appropriate notation is cipher rather than a staff. Pitch-identical to the idealised slendro shipped in the Southeast Asia library; both are 5-equal, and neither tradition actually tunes that way."
+    },
+    {
+      "id": "africa.subsaharan.overtone-bow",
+      "name": "Overtone scale (harmonics 8-14), Southern African bow music",
+      "tradition": "Sub-Saharan African bow music",
+      "region": "Africa",
+      "degreeCents": [0, 203.91, 386.314, 551.318, 701.955, 840.528, 968.826],
+      "notatable": false,
+      "source": "Computed, not measured: harmonics 8 through 14 of the natural harmonic series (9/8, 5/4, 11/8, 3/2, 13/8, 7/4). Southern African braced musical bows - the Xhosa uhadi and umrhubhe - and their associated overtone singing draw their melodic pitches from the natural harmonics of one or two fundamentals; see Dave Dargie, Xhosa Music: Its Techniques and Instruments, with a Collection of Songs (Cape Town: David Philip, 1988).",
+      "description": "The cents here are exact harmonic-series arithmetic, and the entry is labelled that way rather than presented as a measured instrument. Bow players select a subset of these partials and the fundamentals move, so no fixed seven-note scale is actually played. The 11th partial (551 cents) and 13th (841) fall between letter names, which is why this is marked not notatable."
+    }
+  ]
+}

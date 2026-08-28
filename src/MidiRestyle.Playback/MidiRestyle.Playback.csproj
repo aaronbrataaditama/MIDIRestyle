@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MidiRestyle.Playback</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Melanchall.DryWetMidi" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../MidiRestyle.Core/MidiRestyle.Core.csproj" />
+  </ItemGroup>
+</Project>

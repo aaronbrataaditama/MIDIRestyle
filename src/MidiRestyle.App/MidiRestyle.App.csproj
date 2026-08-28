@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>MidiRestyle.App</RootNamespace>
+    <AssemblyName>MIDIRestyle</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- The exe's own icon, as Explorer, the taskbar and shortcuts see it. Nine sizes from 16 to
+         256; the 16/20/24 entries deliberately omit the grid lines, which turn to mush that small.
+         Also shipped as an Avalonia resource (the Assets/** glob) so the window can use it. -->
+    <ApplicationIcon>Assets/app-icon.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+
+  <!--
+    Portable single-file publish. See CLAUDE.md: IncludeNativeLibrariesForSelfExtract bundles the
+    two .dll natives but leaves Melanchall_DryWetMidi_Native64.dylib copied out LOOSE, so the
+    publish is not a single file until we remove it. A macOS binary has no business in a win-x64
+    publish anyway. Do NOT switch to IncludeAllContentForSelfExtract: it bundles everything but
+    repoints AppContext.BaseDirectory at the extraction dir, breaking settings-beside-exe.
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <!--
+    Portable single-file publish must yield exactly one file (see CLAUDE.md). Two things land in
+    @(ResolvedFileToPublish) that a plain <None Remove> can't reach:
+
+      1. DryWetMIDI's own build/*.targets (Melanchall.DryWetMidi.targets) adds its three natives
+         as plain None/CopyToOutputDirectory items - not RID-graph native assets - via an import
+         that MSBuild processes AFTER this file's own content (NuGet's generated
+         obj/*.nuget.g.targets is imported at the very bottom, inside the SDK's own Sdk.targets
+         import). A static <None Remove> declared here runs in document order BEFORE that import
+         adds the items, so it silently removes nothing. IncludeNativeLibrariesForSelfExtract
+         bundles the two Windows .dll natives (real PE binaries) but can't recognise the
+         Melanchall_DryWetMidi_Native64.dylib (Mach-O, not a Windows native) as bundleable, so it
+         is copied out loose - a macOS binary has no business in a win-x64 publish anyway.
+      2. Debug symbols. DebugType=none above stops MIDIRestyle.pdb, but not
+         MidiRestyle.Core.pdb / MidiRestyle.Playback.pdb (pulled in via ProjectReference
+         copy-local, governed by those projects' own DebugType, which this file must not edit)
+         or the tens-of-MB native symbol files SkiaSharp/HarfBuzzSharp ship alongside their
+         RID-native binaries (libSkiaSharp.pdb, libHarfBuzzSharp.pdb) - none of which belong in a
+         portable end-user build.
+
+    Removing straight from @(ResolvedFileToPublish) - the final, fully-resolved list MSBuild uses
+    to decide what to bundle into the single file vs. copy loose - sidesteps both problems: it
+    runs after every source (None items, RID-graph native assets, copy-local symbols) has already
+    contributed, and before GenerateSingleFileBundle decides what to embed, so a removed entry is
+    neither bundled nor left loose. The DryWetMIDI natives are matched by exact filename, not a
+    wildcard like *.dylib or *32.dll, so a future DryWetMIDI release that adds a genuinely needed
+    native (e.g. win-arm64) would not match these names and so would not be silently dropped too.
+  -->
+  <Target Name="RemoveStrayFilesFromPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          BeforeTargets="GenerateSingleFileBundle"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64' and '$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+        Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb'
+                   or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Melanchall_DryWetMidi_Native32.dll'
+                   or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Melanchall_DryWetMidi_Native64.dylib'" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Publish gate: fails the publish loudly if the portable single-file build is not actually a
+    single file. This is the promise CLAUDE.md documents as previously broken by the stray
+    natives above - guard it mechanically so a future dependency bump can't silently reintroduce
+    a second loose file without the build noticing.
+  -->
+  <Target Name="AssertSingleFilePublish" AfterTargets="Publish" Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <_PortablePublishFiles Include="$(PublishDir)**" />
+    </ItemGroup>
+    <Error
+      Condition="'@(_PortablePublishFiles->Count())' != '1'"
+      Text="Portable publish gate failed: expected exactly 1 file in '$(PublishDir)', found @(_PortablePublishFiles->Count()): @(_PortablePublishFiles, ', '). See CLAUDE.md (portable single-file publish) for why this must hold." />
+    <Message Importance="high" Text="Portable publish gate passed: exactly one file in $(PublishDir) - @(_PortablePublishFiles)" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../MidiRestyle.Core/MidiRestyle.Core.csproj" />
+    <ProjectReference Include="../MidiRestyle.Playback/MidiRestyle.Playback.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+</Project>

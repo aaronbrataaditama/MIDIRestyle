@@ -1,0 +1,135 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "eastasia.china.gong",
+      "name": "Gong",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 400, 700, 900],
+      "notatable": true,
+      "source": "Jones, Stephen (1995). Folk Music of China: Living Instrumental Traditions. Oxford: Clarendon Press.",
+      "description": "The 'do'-mode of the five wusheng (five-tone) rotations of the anhemitonic pentatonic gong-diao system: gong-shang-jue-zhi-yu. Pitch-identical to the Western major pentatonic and to Korean p'yongjo built on this rotation."
+    },
+    {
+      "id": "eastasia.china.shang",
+      "name": "Shang",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 500, 700, 1000],
+      "notatable": true,
+      "source": "Jones, Stephen (1995). Folk Music of China: Living Instrumental Traditions. Oxford: Clarendon Press.",
+      "description": "The second wusheng rotation, tonic on the shang degree of the gong-diao system."
+    },
+    {
+      "id": "eastasia.china.jiao",
+      "name": "Jiao",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 300, 500, 800, 1000],
+      "notatable": true,
+      "source": "Jones, Stephen (1995). Folk Music of China: Living Instrumental Traditions. Oxford: Clarendon Press.",
+      "description": "The third wusheng rotation, tonic on the jiao degree of the gong-diao system."
+    },
+    {
+      "id": "eastasia.china.zhi",
+      "name": "Zhi",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 500, 700, 900],
+      "notatable": true,
+      "source": "Jones, Stephen (1995). Folk Music of China: Living Instrumental Traditions. Oxford: Clarendon Press.",
+      "description": "The fourth wusheng rotation, tonic on the zhi degree of the gong-diao system. Korean court/folk p'yongjo mode uses this same pitch set, a consequence of Korea's import of the Chinese twelve-lu and pentatonic mode theory with Song-dynasty a-ak in 1116 CE, not coincidence. Also pitch-identical to the Japanese Yo scale below - see that entry."
+    },
+    {
+      "id": "eastasia.china.yu",
+      "name": "Yu",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 300, 500, 700, 1000],
+      "notatable": true,
+      "source": "Jones, Stephen (1995). Folk Music of China: Living Instrumental Traditions. Oxford: Clarendon Press.",
+      "description": "The fifth wusheng rotation, tonic on the yu degree of the gong-diao system. Pitch-identical to the Western minor pentatonic and to Korean kyemyonjo, the latter for the same historical-import reason noted on the Zhi entry."
+    },
+    {
+      "id": "eastasia.china.gong-pythagorean",
+      "name": "Gong (Pythagorean)",
+      "tradition": "Chinese Wusheng",
+      "region": "East Asia",
+      "degreeCents": [0, 203.91, 407.82, 701.955, 905.865],
+      "notatable": true,
+      "source": "Sanfen sunyi fa (three-part loss-and-gain method), the ancient Chinese stacked-fifths pitch-generation procedure attested in the Guanzi (4th c. BCE) and Lushi Chunqiu (239 BCE); see Service, Jonathan, 'Chinese Music Theory', Sounding China, Harvard University, https://soundingchina.fas.harvard.edu/Service.html",
+      "description": "True 3-limit stacked-fifths tuning of the Gong mode via the twelve-lu system (Huangzhong-Taicu-Guxian-Linzhong-Nanlu), rather than the 12-TET approximation above. At a 5-cent clustering tolerance this needs 2 pitch-bend channels; at 1 cent, 5."
+    },
+    {
+      "id": "eastasia.japan.in",
+      "name": "In",
+      "tradition": "Japanese Koto/Shamisen (miyako-bushi)",
+      "region": "East Asia",
+      "degreeCents": [0, 100, 500, 700, 800],
+      "notatable": true,
+      "source": "Malm, William P. (1959). Japanese Music and Musical Instruments. Rutland, VT: Charles E. Tuttle.",
+      "description": "The miyako-bushi (urban) pentatonic of Koizumi's tetrachord theory, as presented by Malm. Pitch-identical to the Kumoi (Kumoijoshi) koto tuning below - shipped as a separate, explicitly named entry per this library's duplicate-collision policy, since the plan's own review flagged 'Hon Kumoi Joshi' vs In as an unlabeled-duplicate hazard."
+    },
+    {
+      "id": "eastasia.japan.yo",
+      "name": "Yo",
+      "tradition": "Japanese Koto/Shamisen (ritsu)",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 500, 700, 900],
+      "notatable": true,
+      "source": "Malm, William P. (1959). Japanese Music and Musical Instruments. Rutland, VT: Charles E. Tuttle.",
+      "description": "The ritsu (rural/folk) pentatonic of Koizumi's tetrachord theory, as presented by Malm. Pitch-identical to the Chinese Zhi mode above (both are the widespread 1-2-4-5-6 'suspended' pentatonic collection) - kept as a separate, explicitly cross-referenced entry rather than merged, since Yo and Zhi are independently named and sourced traditions."
+    },
+    {
+      "id": "eastasia.japan.hirajoshi",
+      "name": "Hirajoshi",
+      "tradition": "Japanese Koto (hirajoshi tuning)",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 300, 700, 800],
+      "notatable": true,
+      "source": "Malm, William P. (1959). Japanese Music and Musical Instruments. Rutland, VT: Charles E. Tuttle.",
+      "description": "The living koto hirajoshi string tuning (1 2 b3 5 b6) as documented by Malm. A second, unrelated 'Hirajoshi' spelling circulates from Slonimsky's Thesaurus of Scales and Melodic Patterns (1947) - cents [0,100,500,600,1000] - which is pitch-identical to Iwato below; that variant is deliberately NOT used here to avoid an unlabeled duplicate, and is not shipped as its own entry."
+    },
+    {
+      "id": "eastasia.japan.iwato",
+      "name": "Iwato",
+      "tradition": "Japanese Koto (iwato tuning)",
+      "region": "East Asia",
+      "degreeCents": [0, 100, 500, 600, 1000],
+      "notatable": true,
+      "source": "Malm, William P. (1959). Japanese Music and Musical Instruments. Rutland, VT: Charles E. Tuttle.",
+      "description": "A darker mode of the hirajoshi tuning family, described by Malm. Note this pitch set coincides with the Slonimsky-catalogued 'Hirajoshi' variant deliberately not used for the entry above."
+    },
+    {
+      "id": "eastasia.japan.kumoi",
+      "name": "Kumoi (Kumoijoshi)",
+      "tradition": "Japanese Koto (kumoijoshi tuning)",
+      "region": "East Asia",
+      "degreeCents": [0, 100, 500, 700, 800],
+      "notatable": true,
+      "source": "Malm, William P. (1959). Japanese Music and Musical Instruments. Rutland, VT: Charles E. Tuttle.",
+      "description": "The kumoijoshi koto tuning (1 b2 4 5 b6), historically Yatsuhashi Kengyo's retuning of the hirajoshi family. Pitch-identical to the In entry above - a genuine, well-documented identity between two named traditions (koto tuning practice vs. Koizumi's miyako-bushi mode), not an authoring accident, so both are kept as separate, explicitly cross-referenced entries rather than merged or hidden."
+    },
+    {
+      "id": "eastasia.korea.pyeongjo",
+      "name": "P'yongjo",
+      "tradition": "Korean Jo (Mode) System",
+      "region": "East Asia",
+      "degreeCents": [0, 200, 500, 700, 900],
+      "notatable": true,
+      "source": "Lee, Hye-ku (1981). Essays on Korean Traditional Music (trans. Robert C. Provine). Seoul: Royal Asiatic Society, Korea Branch.",
+      "description": "The 'peaceful/bright' mode of Korean court and folk (sanjo) music, built hwang-tae-joong-rim-namu on the twelve-lu pitch set Korea adopted with Song-dynasty a-ak in 1116 CE. Pitch-identical to the Chinese Zhi mode above for that historical reason."
+    },
+    {
+      "id": "eastasia.korea.gyemyeonjo",
+      "name": "Kyemyonjo",
+      "tradition": "Korean Jo (Mode) System",
+      "region": "East Asia",
+      "degreeCents": [0, 300, 500, 700, 1000],
+      "notatable": true,
+      "source": "Lee, Hye-ku (1981). Essays on Korean Traditional Music (trans. Robert C. Provine). Seoul: Royal Asiatic Society, Korea Branch.",
+      "description": "The 'plaintive/sorrowful' mode of Korean court and folk (sanjo) music, with the minor-third/major-second/major-second/minor-third interval pattern documented by Lee. Pitch-identical to the Chinese Yu mode above and to the Western minor pentatonic, for the same historical-import reason noted on the Zhi/P'yongjo entries."
+    }
+  ]
+}

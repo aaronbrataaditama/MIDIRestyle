@@ -1,0 +1,2 @@
+N:Melanchall.DryWetMidi.Multimedia;MidiRestyle.Core is platform-agnostic and must never call the Multimedia API. Put it behind IPlaybackEngine in MidiRestyle.Playback.
+P:System.Reflection.Assembly.Location;Returns '' under PublishSingleFile and emits IL3000. Use AppContext.BaseDirectory or Environment.ProcessPath.

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- xunit.v3 test projects must be executables: MTP runs each assembly as its own process. -->
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MidiRestyle.Core.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="AwesomeAssertions" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/MidiRestyle.Core/MidiRestyle.Core.csproj" />
+  </ItemGroup>
+
+</Project>

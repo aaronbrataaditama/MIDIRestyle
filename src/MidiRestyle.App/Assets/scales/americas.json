@@ -1,0 +1,35 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "americas.bluesjazz.blueshexatonic",
+      "name": "Blues Hexatonic",
+      "tradition": "African-American Blues",
+      "region": "Americas",
+      "degreeCents": [0, 300, 500, 600, 700, 1000],
+      "notatable": true,
+      "source": "Levine, Mark (1995). The Jazz Theory Book. Petaluma, CA: Sher Music Co., ch. 'Blues Scales'.",
+      "description": "Minor pentatonic plus the flat-five 'blue note' passing tone."
+    },
+    {
+      "id": "americas.bluesjazz.minorpentatonic",
+      "name": "Minor Pentatonic",
+      "tradition": "African-American Blues",
+      "region": "Americas",
+      "degreeCents": [0, 300, 500, 700, 1000],
+      "notatable": true,
+      "source": "Levine, Mark (1995). The Jazz Theory Book. Petaluma, CA: Sher Music Co., ch. 'Blues Scales'.",
+      "description": "Pitch-identical to the Chinese Yu mode and Korean kyemyonjo in the East Asia file - the anhemitonic minor pentatonic is a cross-culturally universal collection, not a copy-paste error; each entry is independently sourced to its own tradition."
+    },
+    {
+      "id": "americas.bluesjazz.majorpentatonic",
+      "name": "Major Pentatonic",
+      "tradition": "African-American Blues",
+      "region": "Americas",
+      "degreeCents": [0, 200, 400, 700, 900],
+      "notatable": true,
+      "source": "Levine, Mark (1995). The Jazz Theory Book. Petaluma, CA: Sher Music Co., ch. 'Blues Scales'.",
+      "description": "Pitch-identical to the Chinese Gong mode in the East Asia file, for the same reason noted on Minor Pentatonic: the anhemitonic major pentatonic recurs independently across unrelated traditions."
+    }
+  ]
+}

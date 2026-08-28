@@ -1,0 +1,1 @@
+P:System.Reflection.Assembly.Location;Returns '' under PublishSingleFile and emits IL3000. Use AppContext.BaseDirectory or Environment.ProcessPath.

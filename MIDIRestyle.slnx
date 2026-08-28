@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MidiRestyle.App/MidiRestyle.App.csproj" />
+    <Project Path="src/MidiRestyle.Core/MidiRestyle.Core.csproj" />
+    <Project Path="src/MidiRestyle.Playback/MidiRestyle.Playback.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MidiRestyle.App.Tests/MidiRestyle.App.Tests.csproj" />
+    <Project Path="tests/MidiRestyle.Core.Tests/MidiRestyle.Core.Tests.csproj" />
+    <Project Path="tests/MidiRestyle.Playback.Tests/MidiRestyle.Playback.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,105 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "middleeast.persian.dastgah-shur",
+      "name": "Dastgâh-e Shur / Navâ (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 135, 295, 500, 700, 790, 995],
+      "notatable": true,
+      "source": "Degrees G, A-koron, B-flat, C, D, E-flat, F realised on Hormoz Farhat's measured 17-tone tar/setar scale (Sol 0, La-koron 135, Si-flat 295, Do 500, Re 700, Mi-flat 790, Fa 995), from Farhat, The Dastgah Concept in Persian Music (Cambridge UP, 1990), tabulated as 'Farhat' in Table 1 of the arXiv paper 'An analysis of Iranian Music Intervals based on Pitch Histogram' (arXiv:2108.01283).",
+      "description": "Persian cents are actively contested. Farhat's measurements put the neutral second at 135; Talai measures 140; Abdoli's pitch-histogram study of Karimi's radif reports 149 (ISMIR 2011). Farhat is chosen here because his values are a fret-position measurement rather than an average over recordings. Navâ shares Shur's tuning (Farhat; confirmed by Abdoli) and is named in this entry rather than duplicated."
+    },
+    {
+      "id": "middleeast.persian.dastgah-shur-koron-fifth",
+      "name": "Dastgâh-e Shur, koron 5th / Dashti (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 135, 295, 500, 630, 790, 995],
+      "notatable": true,
+      "source": "Degrees G, A-koron, B-flat, C, D-koron, E-flat, F as listed for Shur and Avâz-e Dashti in 'Persian Classical Music: System of Modes', Foundation for Iranian Studies (https://fis-iran.org/ebook/persian-system-of-modes/), realised on Farhat's measured 17-tone scale (Re-koron 630) from Farhat 1990 as tabulated in arXiv:2108.01283 Table 1.",
+      "description": "Sources disagree over Shur's fifth degree: the Foundation for Iranian Studies gives a koron fifth, while Farhat's and Abdoli's readings give a natural fifth near 700 cents. LilyPond's Persian support ships the same fork as two tunings, \\shur and \\shurk, crediting Tala'i and During. Both forms are shipped here rather than picking one silently. Avâz-e Dashti uses this pitch collection."
+    },
+    {
+      "id": "middleeast.persian.dastgah-homayun",
+      "name": "Dastgâh-e Homâyun / Bayât-e Esfahân (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 90, 410, 500, 700, 790, 995],
+      "notatable": true,
+      "source": "Degrees G, A-flat, B, C, D, E-flat, F realised on Farhat's measured 17-tone scale (Sol 0, La-flat 90, Si 410, Do 500, Re 700, Mi-flat 790, Fa 995), from Farhat, The Dastgah Concept in Persian Music (Cambridge UP, 1990), tabulated in arXiv:2108.01283 Table 1. Cross-checked against Abdoli, 'Iranian Traditional Music Dastgah Classification' (ISMIR 2011), Table 1: 100 / 398 / 502 / 715 / 800 / 990.",
+      "description": "The second degree is contested: Farhat and Abdoli both read a full minor second (90-100 cents), while the Foundation for Iranian Studies notates a koron (nearer 135). The minor second is chosen here because two independent measurements agree on it. Bayât-e Esfahân uses this pitch collection and is named here rather than duplicated."
+    },
+    {
+      "id": "middleeast.persian.dastgah-mahur",
+      "name": "Dastgâh-e Mâhur / Râst-Panjgâh (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 200, 405, 495, 700, 905, 1110],
+      "notatable": true,
+      "source": "Degrees C D E F G A B realised on Farhat's measured 17-tone scale rooted on Do (500 in his Sol-based table), from Farhat, The Dastgah Concept in Persian Music (Cambridge UP, 1990), tabulated in arXiv:2108.01283 Table 1. Mâhur and Râst-Panjgâh share one tuning (Farhat; Abdoli, ISMIR 2011, Table 1).",
+      "description": "Persian music's diatonic dastgâh - close to a Pythagorean major scale rather than to 12-TET. Note a disagreement: Abdoli's Table 1 gives the seventh as 994 cents rather than a major seventh, which conflicts with every other description of Mâhur; Farhat's fret measurements (1110) are used instead."
+    },
+    {
+      "id": "middleeast.persian.dastgah-chahargah",
+      "name": "Dastgâh-e Chahârgâh (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 130, 405, 495, 700, 790, 1110],
+      "notatable": true,
+      "source": "Degrees C, D-koron, E, F, G, A-flat, B ('Persian Classical Music: System of Modes', Foundation for Iranian Studies) realised on Farhat's measured 17-tone scale rooted on Do, from Farhat, The Dastgah Concept in Persian Music (Cambridge UP, 1990), tabulated in arXiv:2108.01283 Table 1.",
+      "description": "Two augmented-second-like gaps, and a koron second at 130 cents. Abdoli (ISMIR 2011) reports 134 for that second - close agreement - but his upper degrees (634 / 888 / 994) disagree with every theoretical description of Chahârgâh and are not used here."
+    },
+    {
+      "id": "middleeast.persian.dastgah-segah",
+      "name": "Dastgâh-e Segâh (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 205, 340, 545, 705, 835, 995],
+      "notatable": true,
+      "source": "Degrees F, G, A-koron, B-koron, C, D-koron, E-flat as listed in 'Persian Classical Music: System of Modes', Foundation for Iranian Studies (https://fis-iran.org/ebook/persian-system-of-modes/), realised on Farhat's measured 17-tone scale, from Farhat 1990 as tabulated in arXiv:2108.01283 Table 1.",
+      "description": "The most contested entry in this file. The Foundation for Iranian Studies lists Segâh's collection from F, which puts a neutral tritone at 545 cents; Abdoli's measured set (0 / 198 / 352 / 495 / 707 / 826 / 1013) has a plain fourth instead. The FIS spelling is followed because it is an explicit degree list, but the disagreement is real and unresolved."
+    },
+    {
+      "id": "middleeast.persian.avaz-bayat-e-tork",
+      "name": "Avâz-e Bayât-e Tork (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 205, 340, 500, 705, 905, 995],
+      "notatable": true,
+      "source": "Degrees F, G, A-koron, B-flat, C, D, E-flat as listed in 'Persian Classical Music: System of Modes', Foundation for Iranian Studies (https://fis-iran.org/ebook/persian-system-of-modes/), realised on Farhat's measured 17-tone scale, from Farhat 1990 as tabulated in arXiv:2108.01283 Table 1.",
+      "description": "Shur's pitch collection rooted on its fourth degree, which is what gives Bayât-e Tork a distinct interval pattern rather than a distinct pitch set. The avâz differ from their parent dastgâh chiefly by shahed and finalis, which a pitch-remapping tool cannot express."
+    },
+    {
+      "id": "middleeast.persian.avaz-afshari",
+      "name": "Avâz-e Afshâri (Farhat intervals)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 205, 340, 500, 705, 835, 995],
+      "notatable": true,
+      "source": "Degrees F, G, A-koron, B-flat, C, D-koron, E-flat as listed in 'Persian Classical Music: System of Modes', Foundation for Iranian Studies (https://fis-iran.org/ebook/persian-system-of-modes/), realised on Farhat's measured 17-tone scale, from Farhat 1990 as tabulated in arXiv:2108.01283 Table 1.",
+      "description": "Differs from Bayât-e Tork only in the sixth degree - koron rather than natural - which is exactly the distinction Persian theory draws between them."
+    },
+    {
+      "id": "middleeast.persian.dastgah-shur-vaziri",
+      "name": "Dastgâh-e Shur (Vaziri tempered 24-tone)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Ali-Naqi Vaziri's tempered division of the octave into 24 equal quarter-tones (Dastur-e Tar, Tehran, 1913), in which koron is exactly 50 cents flat. Vaziri's system and its role are described in Abdoli, 'Iranian Traditional Music Dastgah Classification' (ISMIR 2011), section 2.",
+      "description": "Explicitly the tempered idealisation, not a measurement. Farhat's objection is that Persian neutral seconds measure 125-145 or 150-170 cents and never exactly 150, and that Vaziri's grid was imported from Western equal temperament; both readings are shipped so the difference is audible rather than argued."
+    },
+    {
+      "id": "middleeast.persian.dastgah-chahargah-vaziri",
+      "name": "Dastgâh-e Chahârgâh (Vaziri tempered 24-tone)",
+      "tradition": "Persian dastgâh",
+      "region": "Middle East",
+      "degreeCents": [0, 150, 400, 500, 700, 800, 1100],
+      "notatable": true,
+      "source": "Ali-Naqi Vaziri's tempered 24-quarter-tone division (Dastur-e Tar, Tehran, 1913), applied to the Chahârgâh degrees C, D-koron, E, F, G, A-flat, B given in 'Persian Classical Music: System of Modes', Foundation for Iranian Studies (https://fis-iran.org/ebook/persian-system-of-modes/).",
+      "description": "The tempered idealisation of Chahârgâh, for comparison against the Farhat-interval entry, whose koron second sits 20 cents lower."
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MidiRestyle.App.ViewModels"
+        xmlns:views="using:MidiRestyle.App.Views"
+        xmlns:controls="using:MidiRestyle.App.Controls"
+        x:Class="MidiRestyle.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitle}"
+        Icon="avares://MIDIRestyle/Assets/app-icon.ico"
+        Width="1280" Height="800"
+        MinWidth="960" MinHeight="600">
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://MIDIRestyle/Views/Icons.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Window.Styles>
+    <Style Selector="TextBlock.sectionHeader">
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+    <Style Selector="TextBlock.metaLabel">
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.metaValue">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Margin" Value="0,0,0,2" />
+    </Style>
+
+    <!-- The centre view tabs. Radio buttons rather than a TabControl: the views are large custom
+         controls that must not be torn down and rebuilt every time the user glances at another
+         tab, and a TabControl's content swapping would do exactly that. -->
+    <Style Selector="RadioButton.viewtab">
+      <Setter Property="Padding" Value="12,5" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="tab" Background="Transparent" CornerRadius="4,4,0,0"
+                  BorderThickness="0,0,0,2" BorderBrush="Transparent"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+
+    <Style Selector="RadioButton.viewtab:pointerover /template/ Border#tab">
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+    </Style>
+
+    <Style Selector="RadioButton.viewtab:checked /template/ Border#tab">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+
+    <!-- Menu bar. The conventional home on Windows for two export formats, the view modes, the
+         Scala importer and a discoverable shortcut list - a toolbar alone cannot carry them. -->
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
+        <Separator />
+        <MenuItem Header="Export _MIDI..." InputGesture="Ctrl+E" Click="OnExportClicked"
+                  IsEnabled="{Binding CanCompare}" />
+<!-- Disabled rather than hidden, and the header states why: an export that cannot
+             proceed is worth showing as unavailable, but a bare grey entry reads as a broken app. -->
+        <MenuItem Header="{Binding MusicXmlMenuHeader}" InputGesture="Ctrl+Shift+E"
+                  Click="OnExportMusicXmlClicked"
+                  IsEnabled="{Binding CanExportMusicXml}" />
+        <Separator />
+        <MenuItem Header="E_xit" InputGesture="Alt+F4" Click="OnExitClicked" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="Piano _roll" InputGesture="Ctrl+1" ToggleType="Radio" GroupName="CentreView"
+                  IsChecked="{Binding IsPianoRollView, Mode=OneWay}"
+                  Command="{Binding ShowPianoRollCommand}" />
+        <!-- Never greyed, even for a scale that cannot be written down. Trying it is reasonable, and
+             the view explaining itself and pointing at Degrees beats a dead menu entry. -->
+        <MenuItem Header="_Staff" InputGesture="Ctrl+2" ToggleType="Radio" GroupName="CentreView"
+                  IsChecked="{Binding IsStaffView, Mode=OneWay}"
+                  Command="{Binding ShowStaffCommand}" />
+        <MenuItem Header="_Degrees" InputGesture="Ctrl+3" ToggleType="Radio" GroupName="CentreView"
+                  IsChecked="{Binding IsDegreesView, Mode=OneWay}"
+                  Command="{Binding ShowDegreesCommand}" />
+        <Separator />
+        <MenuItem Header="_Appearance">
+          <!-- System is a real third state, not a synonym for one of the others: it follows the OS
+               and keeps following it when the OS changes. -->
+          <MenuItem Header="Follow _system" ToggleType="Radio" GroupName="Theme"
+                    Click="OnThemeSystemClicked"
+                    IsChecked="{Binding ThemeIsSystem, Mode=OneWay}" />
+          <MenuItem Header="_Light" ToggleType="Radio" GroupName="Theme"
+                    Click="OnThemeLightClicked"
+                    IsChecked="{Binding ThemeIsLight, Mode=OneWay}" />
+          <MenuItem Header="_Dark" ToggleType="Radio" GroupName="Theme"
+                    Click="OnThemeDarkClicked"
+                    IsChecked="{Binding ThemeIsDark, Mode=OneWay}" />
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Scales">
+        <MenuItem Header="_New custom scale..." Click="OnNewScaleClicked">
+          <MenuItem.Icon>
+            <PathIcon Data="{StaticResource IconNewScale}" Width="12" Height="12" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="_Edit the selected scale..." Click="OnEditScaleClicked" />
+        <Separator />
+        <MenuItem Header="_Import Scala file (.scl)..." Click="OnImportScalaClicked" />
+        <Separator />
+        <MenuItem Header="_Open scales folder" Click="OnOpenScalesFolderClicked">
+          <MenuItem.Icon>
+            <PathIcon Data="{StaticResource IconScalesFolder}" Width="12" Height="12" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_About MIDIRestyle" IsEnabled="False" />
+      </MenuItem>
+    </Menu>
+
+    <!-- Toolbar -->
+    <Border DockPanel.Dock="Top" Padding="8,6" BorderThickness="0,0,0,1"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Command="{Binding OpenCommand}" ToolTip.Tip="Open a MIDI file">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{StaticResource IconOpen}" Width="13" Height="13" />
+            <TextBlock Text="Open" />
+          </StackPanel>
+        </Button>
+        <Button Click="OnExportClicked" IsEnabled="{Binding CanCompare}"
+                ToolTip.Tip="{Binding CompareDisabledReason}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{StaticResource IconExport}" Width="13" Height="13" />
+            <TextBlock Text="Export" />
+          </StackPanel>
+        </Button>
+        <Rectangle Width="1" Margin="6,2" Fill="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+        <!-- The glyph follows the action: a triangle to start, two bars to pause. -->
+        <Button Command="{Binding TogglePlayCommand}" IsEnabled="{Binding CanPlay}"
+                ToolTip.Tip="{Binding PlayDisabledReason}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Panel Width="13" Height="13">
+              <PathIcon Data="{StaticResource IconPlay}" Width="13" Height="13"
+                        IsVisible="{Binding !IsPlaying}" />
+              <PathIcon Data="{StaticResource IconPause}" Width="13" Height="13"
+                        IsVisible="{Binding IsPlaying}" />
+            </Panel>
+            <TextBlock Text="{Binding PlayPauseLabel}" />
+          </StackPanel>
+        </Button>
+        <Button Command="{Binding StopPlaybackCommand}" IsEnabled="{Binding CanStop}"
+                ToolTip.Tip="Stop and rewind to the start">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{StaticResource IconStop}" Width="13" Height="13" />
+            <TextBlock Text="Stop" />
+          </StackPanel>
+        </Button>
+        <!-- The A/B toggle is meaningless until there is a transform to compare against. -->
+        <!--
+          IsChecked is bound ONE WAY. Two-way alongside the command made a click do the work twice:
+          the binding set the flag, then the command toggled the engine and set it again - so the two
+          could disagree and the label would lie about what was sounding.
+        -->
+        <ToggleButton Command="{Binding ToggleAbCommand}"
+                      IsChecked="{Binding HearingRestyled, Mode=OneWay}"
+                      IsEnabled="{Binding CanCompare}" MinWidth="150"
+                      ToolTip.Tip="{Binding CompareDisabledReason}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{StaticResource IconCompare}" Width="13" Height="13" />
+            <TextBlock Text="{Binding AbLabel}" />
+          </StackPanel>
+        </ToggleButton>
+      </StackPanel>
+    </Border>
+
+    <!-- Status bar. Everything the engine decides silently reports here. -->
+    <Border DockPanel.Dock="Bottom" Padding="8,5" BorderThickness="0,1,0,0"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Grid ColumnDefinitions="*,Auto" DataContext="{Binding Status}">
+        <StackPanel Spacing="2">
+          <TextBlock Text="{Binding Message}" FontSize="12" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding ActiveNotices}" IsVisible="{Binding HasNotices}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                    VerticalAlignment="Center">
+          <!-- Indeterminate: the exporter reports no progress, and a fake percentage would be a
+               lie about something the user is waiting on. -->
+          <ProgressBar IsIndeterminate="True" Width="90" Height="4"
+                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsExporting}" />
+          <TextBlock Text="{Binding SettingsLocation}" FontSize="11" Opacity="0.5" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Three panes: what gets restyled (left), the result (centre), how (right). -->
+    <Grid ColumnDefinitions="300,4,*,4,340">
+
+      <!-- LEFT: metadata header above the track list -->
+      <DockPanel Grid.Column="0" Margin="10">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+          <TextBlock Classes="sectionHeader" Text="FILE" />
+          <ContentControl Content="{Binding Metadata}">
+            <ContentControl.ContentTemplate>
+              <DataTemplate DataType="vm:MetadataViewModel">
+                <StackPanel>
+                  <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Classes="metaValue" Text="{Binding FormatText}" />
+                  <TextBlock Classes="metaValue" Text="{Binding DivisionText}" />
+                  <TextBlock Classes="metaValue" Text="{Binding DurationText}" />
+                  <TextBlock Classes="metaValue" Text="{Binding TempoText}" />
+                  <TextBlock Classes="metaValue" Text="{Binding TimeSignatureText}" />
+                  <TextBlock Classes="metaValue" Foreground="Goldenrod" TextWrapping="Wrap"
+                             Text="{Binding SequenceNotice}"
+                             IsVisible="{Binding SequenceNotice, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                </StackPanel>
+              </DataTemplate>
+            </ContentControl.ContentTemplate>
+          </ContentControl>
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Top" Classes="sectionHeader" Text="TRACKS" />
+
+        <ListBox ItemsSource="{Binding Tracks}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:TrackViewModel">
+              <Grid ColumnDefinitions="Auto,*" Margin="0,3">
+                <!-- Channel 10 renders locked, not merely unchecked: an unchecked box invites a
+                     click, and a click that silently does nothing teaches the user nothing. -->
+                <CheckBox Grid.Column="0" Margin="0,0,8,0"
+                          IsChecked="{Binding Restyle}"
+                          IsEnabled="{Binding !IsLocked}"
+                          ToolTip.Tip="{Binding LockReason}" />
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="{Binding DisplayName}" FontSize="13" />
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="metaLabel" Text="{Binding DisplayChannel, StringFormat='ch {0}'}" />
+                    <TextBlock Classes="metaLabel" Text="{Binding NoteCount, StringFormat='{}{0} notes'}" />
+                    <TextBlock Classes="metaLabel" Text="{Binding RangeText}" />
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+
+      <GridSplitter Grid.Column="1" Background="Transparent" />
+
+      <!-- CENTRE: the result. Three views over one transform - see the note on the tab strip. -->
+      <Border Grid.Column="2" Margin="0,10"
+              BorderThickness="1,0"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+        <DockPanel>
+          <!--
+            The view-tab strip. It arrives with the staff and degree views and not before: while two
+            of the three were inert, a strip of tabs that did nothing would have been worse than no
+            strip. The tabs are radio-bound to the same commands as the View menu so the two can
+            never disagree about which view is showing.
+          -->
+          <Border DockPanel.Dock="Top" Padding="8,6,8,0"
+                  IsVisible="{Binding HasProject}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <RadioButton Classes="viewtab" GroupName="CentreViewTabs" Content="Piano roll"
+                           IsChecked="{Binding IsPianoRollView, Mode=OneWay}"
+                           Command="{Binding ShowPianoRollCommand}" />
+              <RadioButton Classes="viewtab" GroupName="CentreViewTabs" Content="Staff"
+                           IsChecked="{Binding IsStaffView, Mode=OneWay}"
+                           Command="{Binding ShowStaffCommand}" />
+              <RadioButton Classes="viewtab" GroupName="CentreViewTabs" Content="Degrees"
+                           IsChecked="{Binding IsDegreesView, Mode=OneWay}"
+                           Command="{Binding ShowDegreesCommand}" />
+            </StackPanel>
+          </Border>
+
+          <Panel>
+            <!--
+              Scrollbars alongside the roll rather than a ScrollViewer around it: the control does
+              its own virtual scrolling in ticks and cents, and wrapping it would mean materialising
+              the whole piece as a surface. Dragging still works; these just make the position
+              visible and give a target for people who would rather not drag.
+            -->
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto"
+                  IsVisible="{Binding ShowPianoRollPane}">
+              <controls:PianoRoll x:Name="PianoRollView" Grid.Row="0" Grid.Column="0"
+                                  ClipToBounds="True" />
+
+              <ScrollBar x:Name="VerticalRollScroll" Grid.Row="0" Grid.Column="1"
+                         Orientation="Vertical" AllowAutoHide="False"
+                         Scroll="OnVerticalRollScroll" />
+
+              <ScrollBar x:Name="HorizontalRollScroll" Grid.Row="1" Grid.Column="0"
+                         Orientation="Horizontal" AllowAutoHide="False"
+                         Scroll="OnHorizontalRollScroll" />
+            </Grid>
+
+            <!-- Staff. Shown only when the target scale can honestly be written on one; the
+                 explanation below takes its place when it cannot. -->
+            <Grid ColumnDefinitions="*,Auto"
+                  IsVisible="{Binding ShowStaffPane}">
+              <controls:StaffView x:Name="StaffNotationView" Grid.Row="0" Grid.Column="0"
+                                  ClipToBounds="True"
+                                  Score="{Binding Score}"
+                                  IsVisible="{Binding CanShowStaff}" />
+
+              <!-- A view that cannot render explains itself and offers the one that can. -->
+              <StackPanel Grid.Row="0" Grid.Column="0" Margin="40" Spacing="14"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          IsVisible="{Binding !CanShowStaff}">
+                <TextBlock Text="{Binding StaffUnavailableReason}"
+                           TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center"
+                           Opacity="0.75" />
+                <Button Content="Show the Degrees view" HorizontalAlignment="Center"
+                        Command="{Binding ShowDegreesCommand}" />
+              </StackPanel>
+
+              <ScrollBar x:Name="StaffScroll" Grid.Row="0" Grid.Column="1"
+                         Orientation="Vertical" AllowAutoHide="False"
+                         IsVisible="{Binding CanShowStaff}"
+                         Scroll="OnStaffScroll" />
+            </Grid>
+
+            <!-- Degrees. Always available: every scale has degrees, whether or not it has letters. -->
+            <Grid IsVisible="{Binding ShowDegreesPane}">
+              <controls:DegreeView x:Name="DegreeNotationView"
+                                   ClipToBounds="True"
+                                   Score="{Binding Score}"
+                                   Scale="{Binding NotationScale}"
+                                   Tonic="{Binding NotationTonic}" />
+            </Grid>
+
+            <TextBlock Text="Open a MIDI file to begin"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.4"
+                       IsVisible="{Binding !HasProject}" />
+          </Panel>
+        </DockPanel>
+      </Border>
+
+      <GridSplitter Grid.Column="3" Background="Transparent" />
+
+      <!--
+        RIGHT: the transform.
+
+        The scale list is NOT in a dropdown. It is the largest element here, always open, because
+        browsing scales IS the app - a dropdown would put a click in front of the only thing users
+        came to do. The policy controls collapse into one disclosure, closed by default; the target
+        tonic sits outside it, because it is a per-file setting that defaults from the detected key
+        rather than a set-once policy.
+      -->
+      <DockPanel Grid.Column="4" Margin="10" DataContext="{Binding StylePanel}">
+
+        <TextBlock DockPanel.Dock="Top" Classes="sectionHeader" Text="RESTYLE INTO" />
+
+        <TextBox DockPanel.Dock="Top" Margin="0,0,0,6"
+                 PlaceholderText="Search scales, traditions, regions"
+                 Text="{Binding SearchText}" />
+
+        <TextBlock DockPanel.Dock="Top" Classes="metaLabel" Margin="2,0,0,8"
+                   Text="{Binding MatchSummary}" />
+
+        <!-- Target tonic: outside the disclosure, because it changes per file. -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+          <TextBlock Classes="sectionHeader" Text="TARGET TONIC" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ComboBox MinWidth="80" SelectedIndex="{Binding TargetTonicPitchClass}">
+              <ComboBoxItem>C</ComboBoxItem><ComboBoxItem>Db</ComboBoxItem>
+              <ComboBoxItem>D</ComboBoxItem><ComboBoxItem>Eb</ComboBoxItem>
+              <ComboBoxItem>E</ComboBoxItem><ComboBoxItem>F</ComboBoxItem>
+              <ComboBoxItem>Gb</ComboBoxItem><ComboBoxItem>G</ComboBoxItem>
+              <ComboBoxItem>Ab</ComboBoxItem><ComboBoxItem>A</ComboBoxItem>
+              <ComboBoxItem>Bb</ComboBoxItem><ComboBoxItem>B</ComboBoxItem>
+            </ComboBox>
+            <NumericUpDown Minimum="0" Maximum="9" Increment="1" MinWidth="90"
+                           Value="{Binding TargetTonicOctave}" FormatString="0" />
+            <TextBlock Classes="metaLabel" VerticalAlignment="Center"
+                       Text="{Binding TargetTonicName}" />
+          </StackPanel>
+
+          <!-- Source key and scale, dimmed under nearest-snap because it consults neither. -->
+          <TextBlock Classes="sectionHeader" Margin="0,12,0,6" Text="SOURCE" />
+          <TextBlock Classes="metaValue" Text="{Binding SourceKeySummary}"
+                     IsEnabled="{Binding IsSourceKeyEnabled}" TextWrapping="Wrap" />
+          <!--
+            The source scale is a setting, not an assumption. Key detection only ever reports major
+            or minor, but a file may already be pentatonic or in a maqam - and a degree index
+            computed against the wrong source scale is simply wrong. Without this control the app
+            could restyle INTO 171 scales but only OUT OF two.
+          -->
+          <ComboBox Margin="0,4,0,0" HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding SourceScaleChoices}"
+                    SelectedItem="{Binding SourceScale}"
+                    IsEnabled="{Binding IsSourceScaleEnabled}"
+                    PlaceholderText="Source scale">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Name}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+
+          <TextBlock Classes="metaLabel" TextWrapping="Wrap" Foreground="Goldenrod" Margin="0,4,0,0"
+                     Text="{Binding RestyleBlockedReason}"
+                     IsVisible="{Binding RestyleBlockedReason,
+                                 Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+          <TextBlock Classes="metaLabel" TextWrapping="Wrap" Foreground="Goldenrod"
+                     Text="{Binding SourceControlsDisabledReason}"
+                     IsVisible="{Binding SourceControlsDisabledReason,
+                                 Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+          <!-- The six set-once controls, collapsed. -->
+          <Expander Margin="0,12,0,0" Header="Mapping and policies"
+                    IsExpanded="{Binding IsPoliciesExpanded}">
+            <StackPanel Spacing="8" Margin="0,6,0,0">
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="MAPPING" />
+                <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding Strategy}">
+                  <ComboBoxItem>Scale degree (keeps contour)</ComboBoxItem>
+                  <ComboBoxItem>Nearest pitch (keeps register)</ComboBoxItem>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="NOTES OUTSIDE THE SOURCE SCALE" />
+                <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding NonScaleNotes}">
+                  <ComboBoxItem>Snap to nearest degree</ComboBoxItem>
+                  <ComboBoxItem>Pass through</ComboBoxItem>
+                  <ComboBoxItem>Drop</ComboBoxItem>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="COLLISIONS" />
+                <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding Collisions}">
+                  <ComboBoxItem>Merge (keep the longest)</ComboBoxItem>
+                  <ComboBoxItem>Displace an octave</ComboBoxItem>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="OUT OF MIDI RANGE" />
+                <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding Range}">
+                  <ComboBoxItem>Shift into range</ComboBoxItem>
+                  <ComboBoxItem>Fold back</ComboBoxItem>
+                  <ComboBoxItem>Drop</ComboBoxItem>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="OUTPUT" />
+                <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding OutputMode}">
+                  <ComboBoxItem>Auto</ComboBoxItem>
+                  <ComboBoxItem>12-TET</ComboBoxItem>
+                  <ComboBoxItem>Microtonal</ComboBoxItem>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="sectionHeader" Text="BEND GROUPING TOLERANCE" />
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Button Content="-" Command="{Binding NarrowToleranceCommand}" />
+                  <TextBlock VerticalAlignment="Center" MinWidth="60" TextAlignment="Center"
+                             Text="{Binding ToleranceCents, StringFormat='{}{0:0.#} c'}" />
+                  <Button Content="+" Command="{Binding WidenToleranceCommand}" />
+                </StackPanel>
+                <TextBlock Classes="metaLabel" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Offsets within this distance share a channel. Lower is more exact; higher spends fewer of the 15 available." />
+              </StackPanel>
+            </StackPanel>
+          </Expander>
+        </StackPanel>
+
+        <!--
+          The fidelity badge. Deviation is neutral information shown calmly at all times; it becomes
+          a warning only when 12-TET output cannot carry the scale. Inverted, it would cry wolf on
+          every maqam or go silent exactly when the user is short-changed.
+        -->
+        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="8,6" CornerRadius="3"
+                Background="#22000000"
+                IsVisible="{Binding Fidelity, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock FontWeight="SemiBold" FontSize="12" Text="{Binding FidelityLabel}" />
+              <TextBlock Classes="metaLabel" Text="{Binding FidelityDescription}" />
+            </StackPanel>
+            <TextBlock Foreground="Goldenrod" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                       Text="{Binding FidelityWarning}"
+                       IsVisible="{Binding IsFidelityWarning}" />
+          </StackPanel>
+        </Border>
+
+        <!-- The list itself: always open, region-grouped, virtualised. -->
+        <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
+                 Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:ScaleListItem">
+              <Panel>
+                <!-- Region header. Not selectable, so arrow-key browsing never stops on one. -->
+                <TextBlock Classes="sectionHeader" Margin="0,8,0,2" IsVisible="{Binding IsHeader}"
+                           Text="{Binding Text}" />
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsSelectable}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Text}" FontSize="13" TextWrapping="NoWrap" />
+                    <TextBlock Classes="metaLabel" Text="{Binding Detail}" TextWrapping="NoWrap" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Classes="metaLabel" VerticalAlignment="Center"
+                             Margin="6,0,0,0" Text="{Binding FidelityLabel}" />
+                </Grid>
+              </Panel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+
+    </Grid>
+  </DockPanel>
+</Window>

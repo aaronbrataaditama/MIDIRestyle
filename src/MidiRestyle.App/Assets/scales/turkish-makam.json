@@ -1,0 +1,155 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "middleeast.turkish.makam-rast",
+      "name": "Makam Rast (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 384.906, 498.113, 701.887, 905.66, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system (1 comma = 1200/53 = 22.6415 cents). Rast pentachord 9-8-5-9 commas plus Rast tetrachord 9-8-5. Comma sequence and cents verified against Wikipedia, 'Rast (Turkish makam)' (https://en.wikipedia.org/wiki/Rast_(Turkish_makam)), which gives 0 / 203.77 / 384.91 / 498.11 / 701.89 / 905.66 / 1086.79.",
+      "description": "AEU is itself an approximation of Turkish practice, not a recording of it. No AEU degree sits more than about 19 cents from 12-TET, while performed makam sits 30-60 cents away - performed Segah is heard around 340-370 cents against AEU's 384.9. Treat these entries as the notated Turkish system, not as how makam sounds."
+    },
+    {
+      "id": "middleeast.turkish.makam-ussak",
+      "name": "Makam Ussak (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 181.132, 294.34, 498.113, 701.887, 792.453, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Ussak tetrachord 8-5-9 commas plus Buselik pentachord 9-4-9-9. Comma sequence and cents verified against Wikipedia, 'Ussak (Turkish makam)' (https://en.wikipedia.org/wiki/U%C5%9F%C5%9Fak_(Turkish_makam)), which gives 0 / 181.13 / 294.33 / 498.11 / 701.89 / 792.45 / 996.23.",
+      "description": "The Turkish counterpart of Arabic Bayati. The AEU second degree at 181 cents is the system's characteristic 8-comma buyuk mucenneb; performers routinely play it lower still."
+    },
+    {
+      "id": "middleeast.turkish.makam-huseyni",
+      "name": "Makam Hüseyni (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 181.132, 294.34, 498.113, 701.887, 883.019, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Huseyni pentachord 8-5-9-9 commas plus Ussak tetrachord 8-5-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Differs from Ussak only in the sixth degree - 883 cents rather than 792 - which is exactly the distinction Turkish theory draws between the two. Makam Neva shares this pitch set and differs by seyir alone, so it is not shipped separately."
+    },
+    {
+      "id": "middleeast.turkish.makam-buselik",
+      "name": "Makam Buselik (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 294.34, 498.113, 701.887, 792.453, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Buselik pentachord 9-4-9-9 commas plus Kürdi tetrachord 4-9-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "The Pythagorean natural minor of the AEU grid - every degree within 8 cents of 12-TET minor. Makam Nihavend is the same dizi transposed and is not shipped separately."
+    },
+    {
+      "id": "middleeast.turkish.makam-kurdi",
+      "name": "Makam Kürdi (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 90.566, 294.34, 498.113, 701.887, 792.453, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Kürdi tetrachord 4-9-9 commas plus Buselik pentachord 9-4-9-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Pythagorean Phrygian: the 4-comma bakiye second degree at 90.6 cents is the Pythagorean limma, not a tempered semitone."
+    },
+    {
+      "id": "middleeast.turkish.makam-cargah",
+      "name": "Makam Çargâh (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 407.547, 498.113, 701.887, 905.66, 1109.434],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Çargâh pentachord 9-9-4-9 commas plus Çargâh tetrachord 9-9-4 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "The Pythagorean major scale as AEU spells it - thirds at 407.5 rather than 400 cents, sevenths at 1109.4 rather than 1100. Makam Mâhûr and Acemasiran use the same dizi at other pitch levels and are not shipped separately."
+    },
+    {
+      "id": "middleeast.turkish.makam-hicaz",
+      "name": "Makam Hicaz (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 113.208, 384.906, 498.113, 701.887, 883.019, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Hicaz tetrachord 5-12-5 commas plus Rast pentachord 9-8-5-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "A genuinely microtonal Hijaz: the second is raised to 113 cents and the third lowered to 385, narrowing the augmented second to 272 cents. That is the same direction of adjustment maqamworld describes for Arabic jins Hijaz, arrived at independently by Ottoman theory."
+    },
+    {
+      "id": "middleeast.turkish.makam-humayun",
+      "name": "Makam Hümâyun (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 113.208, 384.906, 498.113, 701.887, 792.453, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Hicaz tetrachord 5-12-5 commas plus Buselik pentachord 9-4-9-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Hicaz below, Buselik above - the Ottoman counterpart of the Arabic maqam Hijaz shipped in the Middle East library, and a cited microtonal alternative to that maqam's notated 12-TET form."
+    },
+    {
+      "id": "middleeast.turkish.makam-zirguleli-hicaz",
+      "name": "Makam Zirgüleli Hicaz / Hicazkâr (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 113.208, 384.906, 498.113, 701.887, 815.094, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Hicaz pentachord 5-12-5-9 commas plus Hicaz tetrachord 5-12-5 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Hicaz twice over, giving two augmented seconds. Makam Hicazkâr uses the same dizi rooted on Rast and differs by seyir, so the two are named together in one entry rather than shipped as apparently independent scales."
+    },
+    {
+      "id": "middleeast.turkish.makam-suzinak",
+      "name": "Makam Sûzinâk (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 384.906, 498.113, 701.887, 815.094, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Rast pentachord 9-8-5-9 commas plus Hicaz tetrachord 5-12-5 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Rast below, Hicaz above; the Ottoman counterpart of Arabic maqam Suznak."
+    },
+    {
+      "id": "middleeast.turkish.makam-karcigar",
+      "name": "Makam Karcığar (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 181.132, 294.34, 498.113, 611.321, 883.019, 996.226],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Ussak tetrachord 8-5-9 commas plus Hicaz pentachord 5-12-5-9 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Ussak below with Hicaz starting on the fourth degree, which is why the fifth degree sits at 611 cents rather than near 700. AEU is widely acknowledged to represent Karcığar poorly - performed intonation of the Ussak segment sits well below these values."
+    },
+    {
+      "id": "middleeast.turkish.makam-nikriz",
+      "name": "Makam Nikriz (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 316.981, 588.679, 701.887, 905.66, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Nikriz pentachord 9-5-12-5 commas plus Rast tetrachord 9-8-5. Comma sequence and cents verified against Wikipedia, 'Nikriz' (https://en.wikipedia.org/wiki/Nikriz), which gives 0 / 203.77 / 316.97 / 588.67 / 701.89 / 905.66 / 1086.79.",
+      "description": "Genuinely microtonal where the Arabic notated Nikriz is not: the third sits at 317 cents and the augmented fourth at 589, rather than 300 and 600."
+    },
+    {
+      "id": "middleeast.turkish.makam-neveser",
+      "name": "Makam Nevêser (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 316.981, 588.679, 701.887, 815.094, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Nikriz pentachord 9-5-12-5 commas plus Hicaz tetrachord 5-12-5 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Nikriz below, Hicaz above - two augmented seconds in different places, which is what separates it from Zirgüleli Hicaz."
+    },
+    {
+      "id": "middleeast.turkish.makam-sultaniyegah",
+      "name": "Makam Sultânîyegâh (AEU)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 203.774, 294.34, 498.113, 701.887, 815.094, 1086.792],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system. Buselik pentachord 9-4-9-9 commas plus Hicaz tetrachord 5-12-5 (total 53). Comma values and cesni definitions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Buselik below, Hicaz above - the AEU reading of what Western theory would call harmonic minor, and about 15 cents away from it at the sixth and seventh."
+    },
+    {
+      "id": "middleeast.turkish.makam-segah",
+      "name": "Makam Segâh (AEU dizi)",
+      "tradition": "Turkish makam (AEU)",
+      "region": "Middle East",
+      "degreeCents": [0, 113.208, 316.981, 520.755, 701.887, 815.094, 1018.868],
+      "notatable": true,
+      "source": "Arel-Ezgi-Uzdilek 53-comma system: the Rast pitch collection rooted on perde Segâh (17 commas above Rast), giving the comma sequence 5-9-9-8-5-9-8 (total 53). Comma values and perde positions after H. S. Arel, Türk Mûsikîsi Nazariyatı Dersleri, and K. Signell, Makam: Modal Practice in Turkish Art Music (1977).",
+      "description": "Shipped as the plain AEU dizi rooted on perde Segâh. Turkish theorists differ over how the upper cesni of makam Segâh should be analysed, and this entry takes no position on that - it reproduces the pitch collection, not the seyir. AEU's Segâh degree (384.9 cents above Rast) is itself the system's worst-known departure from practice, which sits nearer 340-370."
+    }
+  ]
+}

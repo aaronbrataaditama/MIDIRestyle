@@ -1,0 +1,39 @@
+# Normalise line endings: LF in the repo, native in the working tree.
+* text=auto
+
+# Explicitly text
+*.cs        text diff=csharp
+*.csproj    text
+*.sln       text eol=crlf
+*.axaml     text
+*.xaml      text
+*.json      text
+*.md        text
+*.yml       text
+*.yaml      text
+*.props     text
+*.targets   text
+*.editorconfig text
+
+# Scala scale files are plain text
+*.scl       text
+*.tun       text
+
+# Scripts keep their platform's endings
+*.ps1       text eol=crlf
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+*.sh        text eol=lf
+
+# Binary — never diff or normalise
+*.mid       binary
+*.midi      binary
+*.sf2       binary
+*.dll       binary
+*.exe       binary
+*.pdb       binary
+*.png       binary
+*.jpg       binary
+*.ico       binary
+*.ttf       binary
+*.otf       binary

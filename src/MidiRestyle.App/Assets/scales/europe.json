@@ -1,0 +1,125 @@
+{
+  "schema": "midirestyle-scales-v1",
+  "scales": [
+    {
+      "id": "europe.churchmodes.ionian",
+      "name": "Ionian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 400, 500, 700, 900, 1100],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "The major scale as a mode; W-W-H-W-W-W-H."
+    },
+    {
+      "id": "europe.churchmodes.dorian",
+      "name": "Dorian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 500, 700, 900, 1000],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "Minor with a raised (natural) sixth degree."
+    },
+    {
+      "id": "europe.churchmodes.phrygian",
+      "name": "Phrygian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 100, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "Minor with a lowered second degree."
+    },
+    {
+      "id": "europe.churchmodes.lydian",
+      "name": "Lydian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 400, 600, 700, 900, 1100],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "Major with a raised fourth degree."
+    },
+    {
+      "id": "europe.churchmodes.mixolydian",
+      "name": "Mixolydian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 400, 500, 700, 900, 1000],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "Major with a lowered seventh degree."
+    },
+    {
+      "id": "europe.churchmodes.aeolian",
+      "name": "Aeolian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 500, 700, 800, 1000],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "The natural minor scale as a mode."
+    },
+    {
+      "id": "europe.churchmodes.locrian",
+      "name": "Locrian",
+      "tradition": "Western Church Modes",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 100, 300, 500, 600, 800, 1000],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'Modality'.",
+      "description": "Minor with lowered second and fifth degrees; the only mode with a diminished tonic triad."
+    },
+    {
+      "id": "europe.commonpractice.harmonicminor",
+      "name": "Harmonic Minor",
+      "tradition": "Western Common-Practice Minor",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 500, 700, 800, 1100],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'The Minor Mode'.",
+      "description": "Natural minor with a raised leading tone, producing the characteristic augmented second between the sixth and seventh degrees."
+    },
+    {
+      "id": "europe.commonpractice.melodicminor",
+      "name": "Melodic Minor (ascending)",
+      "tradition": "Western Common-Practice Minor",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 500, 700, 900, 1100],
+      "notatable": true,
+      "source": "Piston, Walter & DeVoto, Mark (1987). Harmony, 5th ed. New York: W.W. Norton, ch. 'The Minor Mode'.",
+      "description": "Ascending form only, per the plan: natural minor with raised sixth and seventh degrees. Restyling is pitch remapping, not a contour-aware ascending/descending distinction, so only the ascending collection is authored."
+    },
+    {
+      "id": "europe.balkan.doubleharmonic",
+      "name": "Double Harmonic (Byzantine)",
+      "tradition": "Byzantine / Near-Eastern Hybrid",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 100, 400, 500, 700, 800, 1100],
+      "notatable": true,
+      "source": "Slonimsky, Nicolas (1947). Thesaurus of Scales and Melodic Patterns. New York: Coleman-Ross, 'Heptatonic Scales with Two Augmented Seconds'.",
+      "description": "Also called the Arabic/Byzantine scale and, in Western terms, Hijaz Kar: two augmented-second gaps, between degrees 2-3 and 6-7."
+    },
+    {
+      "id": "europe.balkan.hungarianminor",
+      "name": "Hungarian Minor",
+      "tradition": "Hungarian Romani (Gypsy)",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 600, 700, 800, 1100],
+      "notatable": true,
+      "source": "Slonimsky, Nicolas (1947). Thesaurus of Scales and Melodic Patterns. New York: Coleman-Ross, 'Heptatonic Scales with Two Augmented Seconds'.",
+      "description": "Harmonic minor with a raised fourth degree; also called the Gypsy minor scale."
+    },
+    {
+      "id": "europe.balkan.ukrainiandorian",
+      "name": "Ukrainian Dorian",
+      "tradition": "Ukrainian Folk",
+      "region": "Europe & Balkans",
+      "degreeCents": [0, 200, 300, 600, 700, 900, 1000],
+      "notatable": true,
+      "source": "Slonimsky, Nicolas (1947). Thesaurus of Scales and Melodic Patterns. New York: Coleman-Ross, 'Heptatonic Scales with One Augmented Second'.",
+      "description": "Dorian with a raised fourth degree; also called the Romanian minor / altered Dorian scale."
+    }
+  ]
+}

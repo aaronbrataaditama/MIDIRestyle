@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MidiRestyle.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Referencing DryWetMIDI is fine here. Only the Multimedia namespace is platform-bound,
+         and BannedSymbols.txt makes touching it a build error. -->
+    <PackageReference Include="Melanchall.DryWetMidi" />
+  </ItemGroup>
+</Project>

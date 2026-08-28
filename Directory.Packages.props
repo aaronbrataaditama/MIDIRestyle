@@ -1,0 +1,38 @@
+<Project>
+
+  <!--
+    Central package management. Every version is pinned deliberately - "current" is not a version.
+    Each pin was verified to exist on nuget.org on 2026-08-26.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="UI">
+    <PackageVersion Include="Avalonia" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.1" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="MIDI">
+    <!-- MIT. Ships Native32.dll, Native64.dll, Native64.dylib - and NO Linux native, which is
+         why IPlaybackEngine exists. -->
+    <PackageVersion Include="Melanchall.DryWetMidi" Version="8.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="xunit.v3" Version="4.0.0" />
+    <!-- NOT FluentAssertions: v8+ is proprietary Xceed licensing, $130/dev/yr commercial.
+         AwesomeAssertions is the Apache-2.0 fork with the same API. -->
+    <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,50 @@
+<!--
+  Toolbar icon geometries for MIDIRestyle.
+
+  Convention: every StreamGeometry below is authored on a 24x24 coordinate box,
+  so they scale uniformly together and line up optically at any common size
+  (the toolbar uses 14x14 via PathIcon). Do not mix in geometry authored on a
+  different canvas size.
+
+  Usage:
+    <PathIcon Data="{StaticResource IconPlay}" Width="14" Height="14" />
+
+  Fill rule note: paths that are a single closed contour rely on the default
+  fill rule. IconOpen and IconScalesFolder each carry a second, nested contour
+  that punches a hole through the folder body - a solid folder silhouette
+  reads as an undifferentiated black square at 14x14, so the hollow interior
+  is what makes the shape actually read as "folder" rather than "square" at
+  toolbar size. Both open with "F0" to force EvenOdd, which treats any nested
+  contour as a hole regardless of winding direction.
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Open a MIDI file: open folder - tab + body + a flared skirt below the body,
+       hollow interior. The flared skirt is what reads as "open" next to
+       IconScalesFolder's plain rectangle body. -->
+  <StreamGeometry x:Key="IconOpen">F0 M2,5 L9,5 L11,7 L22,7 L22,19 L23,23 L1,23 L2,19 Z M5,10 L19,10 L19,16 L5,16 Z</StreamGeometry>
+
+  <!-- Open the scales folder: plain closed folder, tab + rectangular body, hollow interior.
+       Distinguishable from IconOpen by its flat bottom edge (no flare). -->
+  <StreamGeometry x:Key="IconScalesFolder">F0 M2,5 L9,5 L11,7 L22,7 L22,19 L2,19 Z M5,10 L19,10 L19,16 L5,16 Z</StreamGeometry>
+
+  <!-- Export: down arrow dropping onto a tray, not an upload arrow -->
+  <StreamGeometry x:Key="IconExport">M10,3 L14,3 L14,11 L18,11 L12,17 L6,11 L10,11 Z M3,20 L21,20 L21,23 L3,23 Z</StreamGeometry>
+
+  <!-- Play: solid right-pointing triangle -->
+  <StreamGeometry x:Key="IconPlay">M6,4 L6,20 L20,12 Z</StreamGeometry>
+
+  <!-- Pause: two solid vertical bars -->
+  <StreamGeometry x:Key="IconPause">M6,4 L10,4 L10,20 L6,20 Z M14,4 L18,4 L18,20 L14,20 Z</StreamGeometry>
+
+  <!-- Stop: solid square -->
+  <StreamGeometry x:Key="IconStop">M5,5 L19,5 L19,19 L5,19 Z</StreamGeometry>
+
+  <!-- A/B Compare: two opposed horizontal arrows (swap form) -->
+  <StreamGeometry x:Key="IconCompare">M2,5 L12,5 L12,2 L19,7 L12,12 L12,9 L2,9 Z M22,15 L12,15 L12,12 L5,17 L12,22 L12,19 L22,19 Z</StreamGeometry>
+
+  <!-- New scale: bold plus/cross -->
+  <StreamGeometry x:Key="IconNewScale">M9,2 L15,2 L15,9 L22,9 L22,15 L15,15 L15,22 L9,22 L9,15 L2,15 L2,9 L9,9 Z</StreamGeometry>
+
+</ResourceDictionary>

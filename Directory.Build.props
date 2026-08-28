@@ -1,0 +1,64 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- The plan forbids PublishTrimmed: Avalonia's reflection-based binding breaks under it. -->
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!--
+      Test runner wiring, and all three parts are required. Getting any one wrong fails in a way
+      that looks like a different problem:
+
+      * TestingPlatformDotnetTestSupport - the .NET 10 SDK dropped the VSTest bridge, so without
+        this every test project errors with "Testing with VSTest target is no longer supported".
+        The matching `"test": { "runner": ... }` entry in global.json is also required.
+      * UseMicrosoftTestingPlatformRunner - NOT required for `dotnet test`, which works either way.
+        It makes the built test exe an MTP application, so launching it directly accepts the same
+        MTP options (list-tests, filter, diagnostic) that `dotnet test` uses. Without it the exe
+        is xunit's own in-process console runner and rejects those, which makes the two invocation
+        paths behave differently under diagnosis - which is worth avoiding.
+
+      NOTE: never pass the no-logo flag to `dotnet test`. Unrecognised arguments are forwarded to the
+      test application, which rejects it, prints its help, and reports "Zero tests ran" with every
+      test actually passing. Fine on `dotnet build`; breaks `dotnet test`.
+    -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+
+  <!--
+    Banned APIs, enforced as build errors. Two invariants from CLAUDE.md live here because
+    convention cannot enforce them:
+
+    1. MidiRestyle.Core must never touch Melanchall.DryWetMidi.Multimedia. That namespace is NOT a
+       separate package - 180 types in it live inside the same assembly Core references, so nothing
+       but this analyzer stops a stray `using`.
+    2. Assembly.Location returns '' under PublishSingleFile and emits IL3000. Path resolution must
+       use AppContext.BaseDirectory or Environment.ProcessPath.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <WarningsAsErrors>$(WarningsAsErrors);RS0030</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/BannedSymbols.txt')">
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
