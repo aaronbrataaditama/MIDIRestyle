@@ -35,6 +35,7 @@ next session time. Keep "Next action" accurate to the single next thing to do.
 | v1.2 | Staff as a wrapped page, staff playhead follow, degree view as a scale wheel, score follows A/B | **Complete** - see below |
 | v1.3 | Click-to-seek on the staff, real clef and rest glyphs | **Complete** - see below |
 | v1.4 | About window: description, MIT licence link, donation link | **Complete** - see below |
+| - | Third-party notices (Inter/OFL compliance) | **IN FLIGHT** - researched, not written; see below |
 
 > **Current: 2026-08-31.** Last verified green: **1314 tests, 0 warnings**, publish gate passing at
 > exactly one 50.2 MB file, and the published exe launches and writes its `scales/` folder beside
@@ -51,6 +52,93 @@ next session time. Keep "Next action" accurate to the single next thing to do.
 
 ---
 
+## IN FLIGHT (paused 2026-08-31): third-party notices
+
+**State: research done, nothing written yet. No code or doc changes pending - the tree is clean,
+builds with 0 warnings, 1314/1314 tests pass, and everything is committed and pushed.**
+
+### Why this is needed
+
+The self-contained `.exe` redistributes its dependencies and ships none of their licences. Most
+are MIT, which is a courtesy gap. **Inter is under the SIL Open Font License 1.1, which *requires*
+the licence be bundled with any redistribution** - so this is a compliance gap, not tidiness. It is
+inert while the repo is private and the exe stays on one machine; it binds the moment either is
+shared.
+
+### The design constraint that shapes the whole solution
+
+`AssertSingleFilePublish` requires the publish folder to hold **exactly one file**. So a notices
+file CANNOT be copied beside the exe - that breaks the gate, which is a load-bearing invariant.
+The notices must travel *inside* the exe:
+
+1. `THIRD-PARTY-NOTICES.txt` at the repo root (source distribution).
+2. Embedded into the App assembly as a resource - the canonical scale JSON already does exactly
+   this, so follow `ScaleLibraryService` for the pattern.
+3. Surfaced from the About window - a link opening a scrollable read-only view. Preferred over
+   writing the file out beside the exe at runtime: no filesystem write, so it still works on
+   read-only media, which the app already takes care to support.
+
+### Research already done - do NOT redo this
+
+**The authoritative redistributed set**, obtained by publishing unbundled
+(`-p:PublishSingleFile=false -o <tmp>`) rather than guessing from the package list. 232 files.
+Most of the transitive package list is irrelevant: the Linux, macOS and WebAssembly native
+asset packages resolve but do not land in a win-x64 publish, and BannedApiAnalyzers is an
+analyzer, not a redistributable.
+
+| Component | Ships as | Licence |
+|---|---|---|
+| Avalonia (23 assemblies) | managed | MIT (nuspec SPDX expression) |
+| CommunityToolkit.Mvvm | managed | MIT; package ships `License.md` + `ThirdPartyNotices.txt` |
+| Melanchall.DryWetMidi + 2 natives | managed + native | MIT |
+| SkiaSharp / `libSkiaSharp.dll` | managed + native | MIT; native pkg ships `THIRD-PARTY-NOTICES.txt` (Skia itself is Google BSD-3) |
+| HarfBuzzSharp / `libHarfBuzzSharp.dll` | managed + native | MIT; native pkg ships `THIRD-PARTY-NOTICES.txt` |
+| MicroCom.Runtime, Tmds.DBus.Protocol | managed | MIT |
+| ANGLE (`av_libglesv2.dll`) | native | ships its own `LICENSE` in avalonia.angle.windows.natives (NOT read yet) |
+| .NET runtime (173 System.*/Microsoft.* + coreclr, clrjit, hostfxr, msquic) | managed + native | MIT |
+| **Inter font** | 6 `.ttf` embedded in `Avalonia.Fonts.Inter.dll` | **SIL OFL 1.1** |
+
+**Inter is the important one, and the package hides it.** `avalonia.fonts.inter.nuspec` declares
+`MIT` - that covers Avalonia's own code, not the font - and the package ships **no OFL text at
+all**. The real notice was read out of the font binary's own `name` table (parsed by locating the
+`0x00010000` sfnt signature in the DLL and walking the table records; the resources are stored raw,
+so plain grep finds nothing):
+
+```
+Copyright           Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+Version             Version 3.019;git-0a5106e0b
+Designer            Rasmus Andersson
+LicenseDescription  This Font Software is licensed under the SIL Open Font License, Version 1.1.
+                    This license is available with a FAQ at: http://scripts.sil.org/OFL
+LicenseURL          http://scripts.sil.org/OFL
+```
+
+Note the name table declares **no Reserved Font Name**, so the OFL's RFN clause does not bite.
+The six faces embedded are Thin, Light, Regular, Medium, SemiBold, Bold.
+
+### What is left to do
+
+1. **Obtain the OFL 1.1 full text.** Required verbatim by the licence. The last command run was a
+   search for it on disk (nuget cache, dotnet install) and it was interrupted before answering, so
+   it is still unknown whether a local copy exists. If not, fetch from `https://openfontlicense.org`
+   or `http://scripts.sil.org/OFL`. **Do not reproduce it from memory - it is a legal text.**
+2. **Read the licence files already on disk** (all confirmed present, none read yet):
+   `avalonia.angle.windows.natives/<ver>/LICENSE`,
+   `skiasharp.nativeassets.win32/<ver>/THIRD-PARTY-NOTICES.txt`,
+   `harfbuzzsharp.nativeassets.win32/<ver>/THIRD-PARTY-NOTICES.txt`,
+   `communitytoolkit.mvvm/<ver>/ThirdPartyNotices.txt`, and the .NET runtime licence under
+   `C:\Program Files\dotnet`.
+3. Assemble `THIRD-PARTY-NOTICES.txt` from those **real texts**. The canonical MIT body is already
+   verified in `LICENSE` (162 words, diffed against SkiaSharp's copy) and can be stated once with
+   the MIT components listed against it, rather than repeated per package.
+4. Embed it, add the About-window link and viewer, test it.
+5. **Re-run the publish gate** - it must still report exactly one file. Delete the publish
+   directory first: the exe writes `MIDIRestyle.settings.json` and `scales/` beside itself at
+   runtime, and those stale files fail the gate on the next publish.
+6. Add a `## Third-party software` note to the README, and update its `## Licence` section, which
+   currently ends "this repository does not yet bundle their notices".
+
+---
 ## v1.4 - the About window (complete)
 
 `Help > About MIDIRestyle` was a placeholder menu item with `IsEnabled="False"`. It now opens a
