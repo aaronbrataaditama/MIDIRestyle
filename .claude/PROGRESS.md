@@ -105,7 +105,8 @@ looking at the PNGs.
 ### Left undone, deliberately
 
 A `LICENSE` file was added on 2026-08-31 (MIT, `Copyright (c) 2026 Aaron Brata Aditama` —
-the holder name was derived from the GitHub username, not supplied, so it is worth confirming).
+the holder name was derived from the GitHub username and confirmed by the owner
+on 2026-08-31).
 Its wording was verified word-for-word against SkiaSharp's plain-text MIT licence in the NuGet
 cache: 162 words, zero differences.
 
