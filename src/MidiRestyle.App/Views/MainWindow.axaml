@@ -122,7 +122,7 @@
         </MenuItem>
       </MenuItem>
       <MenuItem Header="_Help">
-        <MenuItem Header="_About MIDIRestyle" IsEnabled="False" />
+        <MenuItem Header="_About MIDIRestyle" Click="OnAboutClicked" />
       </MenuItem>
     </Menu>
 

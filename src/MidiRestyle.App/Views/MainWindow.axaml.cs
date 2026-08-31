@@ -713,5 +713,10 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---- Help menu ---------------------------------------------------------------------------
+
+    private async void OnAboutClicked(object? sender, RoutedEventArgs e) =>
+        await new AboutWindow().ShowDialog(this).ConfigureAwait(true);
+
     private void OnExitClicked(object? sender, RoutedEventArgs e) => Close();
 }

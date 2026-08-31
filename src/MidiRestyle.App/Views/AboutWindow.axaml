@@ -1,0 +1,114 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MidiRestyle.App.ViewModels"
+        x:Class="MidiRestyle.App.Views.AboutWindow"
+        x:DataType="vm:AboutViewModel"
+        Title="About MIDIRestyle"
+        Icon="avares://MIDIRestyle/Assets/app-icon.ico"
+        Width="480"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+  <Window.Styles>
+    <!--
+      A link is a Button rather than a clickable TextBlock so it is focusable and reachable by
+      keyboard: this window has only three controls and tabbing past the licence and donation links
+      to the Close button is the whole of its keyboard story. Avalonia 12 ships no HyperlinkButton,
+      so the Fluent chrome is flattened away here and the underline lives on the inner TextBlock.
+    -->
+    <Style Selector="Button.link">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <!-- Fluent paints the presenter on hover and press; a link must stay flat in every state. -->
+    <Style Selector="Button.link /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.link:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+
+    <Style Selector="TextBlock.subtle">
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.fineprint">
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel Margin="22,20">
+
+    <!--
+      The small print, docked to the foot of the window. Deliberately the last thing read and the
+      quietest thing on the page: an About box may mention a donation, but it should not ask for
+      one louder than it explains what the application is.
+    -->
+    <StackPanel DockPanel.Dock="Bottom" Spacing="12" Margin="0,18,0,0">
+
+      <Border BorderThickness="0,1,0,0"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+
+      <StackPanel Spacing="1">
+        <TextBlock Classes="fineprint" Text="{x:Static vm:AboutViewModel.DonationPrompt}" />
+        <Button Classes="link" Click="OnDonateClicked"
+                ToolTip.Tip="{x:Static vm:AboutViewModel.DonationUrl}">
+          <TextBlock Text="{x:Static vm:AboutViewModel.DonationLinkText}"
+                     FontSize="11"
+                     TextDecorations="Underline"
+                     Foreground="{DynamicResource SystemAccentColor}" />
+        </Button>
+      </StackPanel>
+
+      <!--
+        A browser that will not open is reported here rather than thrown. The dialog has no status
+        bar to fall back on, and an unhandled exception out of a Click handler takes the app down -
+        which is a spectacular way to fail at showing someone a web address they could have typed.
+      -->
+      <TextBlock Classes="fineprint"
+                 Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                 Text="{Binding LaunchError}"
+                 IsVisible="{Binding LaunchError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <Button Content="Close" Click="OnCloseClicked"
+              IsDefault="True" IsCancel="True"
+              HorizontalAlignment="Right" MinWidth="88" />
+    </StackPanel>
+
+    <StackPanel Spacing="14">
+
+      <StackPanel Spacing="2">
+        <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock Classes="subtle" Text="{Binding VersionLine}" />
+      </StackPanel>
+
+      <TextBlock Text="{x:Static vm:AboutViewModel.Description}"
+                 TextWrapping="Wrap" LineHeight="19" />
+
+      <!-- Wraps as one flowing line, so the link stays with its sentence at any font scale. -->
+      <WrapPanel Orientation="Horizontal">
+        <TextBlock Text="{x:Static vm:AboutViewModel.LicenseLine}" Margin="0,0,4,0" />
+        <Button Classes="link" Click="OnLicenseClicked"
+                ToolTip.Tip="{x:Static vm:AboutViewModel.LicenseUrl}">
+          <TextBlock Text="{x:Static vm:AboutViewModel.LicenseLinkText}"
+                     TextDecorations="Underline"
+                     Foreground="{DynamicResource SystemAccentColor}" />
+        </Button>
+      </WrapPanel>
+
+    </StackPanel>
+
+  </DockPanel>
+</Window>

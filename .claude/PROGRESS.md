@@ -34,8 +34,9 @@ next session time. Keep "Next action" accurate to the single next thing to do.
 | v1.1 | MusicXML export, staff view, degree view, shared quantiser + beaming | **Complete** - see below |
 | v1.2 | Staff as a wrapped page, staff playhead follow, degree view as a scale wheel, score follows A/B | **Complete** - see below |
 | v1.3 | Click-to-seek on the staff, real clef and rest glyphs | **Complete** - see below |
+| v1.4 | About window: description, MIT licence link, donation link | **Complete** - see below |
 
-> **Current: 2026-08-28.** Last verified green: **1305 tests, 0 warnings**, publish gate passing at
+> **Current: 2026-08-31.** Last verified green: **1314 tests, 0 warnings**, publish gate passing at
 > exactly one 50.2 MB file, and the published exe launches and writes its `scales/` folder beside
 > itself. All twelve v1 phases complete, **plus the v1.1 notation layer and the v1.2 presentation
 > pass**. 171 scales (99 authored + 72 generated). The app opens a MIDI file, describes it, draws it
@@ -43,7 +44,69 @@ next session time. Keep "Next action" accurate to the single next thing to do.
 > scale in the library, plays it, A/B switches mid-playback with the score following what you hear,
 > and exports both `.mid` and **MusicXML**.
 >
-> **The repository still has ZERO commits.** Nothing is tracked and there is no recovery point.
+> **Committed.** `633d412` is the initial commit - 184 files, the whole of v1 through v1.3 -
+> with the About window committed on top of it. Both commits were re-authored to
+> `aaronbrataaditama <aaronbrataaditama@users.noreply.github.com>` before any push, so the
+> SHAs here are the post-rewrite ones.
+
+---
+
+## v1.4 - the About window (complete)
+
+`Help > About MIDIRestyle` was a placeholder menu item with `IsEnabled="False"`. It now opens a
+modal dialog: what the app does in three paragraphs, a link to the MIT licence, and the donation
+line at the foot.
+
+Files: `ViewModels/AboutViewModel.cs`, `Views/AboutWindow.axaml{,.cs}`, wired from
+`MainWindow.axaml` + `OnAboutClicked`. Tests in `AboutViewModelTests` and `AboutWindowRenderTests`.
+
+### Findings worth not rediscovering
+
+- **Avalonia 12.1.1 ships no `HyperlinkButton`.** A grep of `Avalonia.Controls.dll` appears to find
+  it - that hit is a coincidental substring in the binary. Reflecting over every `Avalonia*.dll` in
+  the package cache finds no type matching `Hyperlink` at all. Links here are `Button`s with the
+  Fluent chrome flattened away in every visual state (`/template/ ContentPresenter` for normal,
+  `:pointerover` and `:pressed`), with the underline and accent colour set **inline on an inner
+  `TextBlock`** rather than as a style - a local value cannot be overridden by Fluent's own
+  presenter-level state setters, and a style setter can.
+- **`InformationalVersion` carries a `+<commit sha>` suffix in every configuration, Debug
+  included.** Confirmed in both `obj/Debug` and `obj/Release` generated `AssemblyInfo.cs`, and
+  stamped on the published exe as `1.3.0+<commit sha>`. `AboutViewModel.ReadVersion` cuts at the plus
+  sign; without that the box would show the sha. The csproj now carries `<Version>1.3.0</Version>`
+  so the About box reads the build rather than restating it.
+- **A C# string constant meant to reflow must be one logical line per paragraph.** Written as a raw
+  string literal across source lines, the source wrapping is preserved verbatim and the `TextBlock`
+  cannot reflow to the window - it renders ragged at a fixed width. Paragraphs are concatenated
+  single-line strings joined by an explicit newline-escape pair, and a test asserts that no
+  paragraph contains a newline of its own.
+- **The publish gate can fail on stale runtime output, not a regression.** The app writes
+  `MIDIRestyle.settings.json` and `scales/` *beside itself*, so launching the published exe from
+  `publish/` leaves 10 extra files there and the next publish fails the exactly-one-file gate.
+  Delete the publish directory before re-publishing. Verified afterwards: one file, 50.2 MB.
+
+### What `AboutWindowRenderTests` actually covers - measured, not assumed
+
+Worth stating, because the first version of its doc comment overclaimed on all three counts:
+
+| Break introduced | Caught? |
+|---|---|
+| `x:Static` naming a constant that does not exist | **Yes - at build time**, AVLN2000; never reaches the test |
+| `{DynamicResource}` naming a key that does not exist | **No** - Avalonia falls back silently by design |
+| `SizeToContent="Height"` removed | **No** - the window is still tall enough for the assertions |
+| `Icon` pointing at a missing avares resource | **Yes** - `FileNotFoundException` at show time |
+
+So it is an honest smoke test: it proves the window builds, shows and renders without throwing,
+which matters because no other test opens this window. It is not a layout or theming guard.
+Appearance was checked by rendering the window headlessly in both theme variants **with the Fluent
+theme added to the test `Application`** - the render fixture configures a bare `Application` with no
+styles, so an unthemed render shows no accent colour, no separator and no button chrome - and
+looking at the PNGs.
+
+### Left undone, deliberately
+
+**There is no `LICENSE` file in the repository.** The About box links to the canonical MIT text at
+`opensource.org/license/mit` rather than to a copy in the repo, because there is no published remote
+to link a file to. Adding one needs a copyright holder name, which is the user's call, not a guess.
 
 ---
 
@@ -901,6 +964,5 @@ Then read, in order: this file, then `../CLAUDE.md` for the invariants, then the
 `plan/PLAN-midi-restyle.md` for the phase you are starting. Work TDD in `Core` — it is pure and
 deterministic and the plan requires it.
 
-Nothing is committed yet; the working tree is the only record, and `git status` shows everything as
-untracked. Committing at each green phase boundary would make resumption safer — worth doing once
-the test runner works.
+v1 through v1.3 are committed as `633d412`, with the v1.4 About window committed on top. The
+working tree is clean. Committing at each green boundary from here keeps resumption cheap.
