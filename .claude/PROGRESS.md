@@ -184,8 +184,8 @@ a green suite.
 > regression test — landed on 2026-08-28 as `tests/MidiRestyle.App.Tests/ChordStemRenderTests.cs`.
 > v1.3 above then followed from the user trying the build again.
 >
-> **The repository still has ZERO commits.** v1, v1.1 and v1.2 are all untracked with no recovery
-> point. This remains the only real risk in the project.
+> **Resolved 2026-08-31.** This callout used to warn that the repository had no commits at
+> all. It is committed now — see the status callout at the top of this file.
 
 ### The chord-stem regression test (done)
 
@@ -276,10 +276,11 @@ test suite did not. All four were invisible to the existing tests and all are no
 - Colour fringing on text in rendered PNGs is Skia's subpixel antialiasing in the headless target,
   not a layout fault.
 
-### The one thing that still needs a human
+### The one thing that still needed a human (resolved)
 
-**The repo has ZERO commits.** Everything — v1, v1.1 and all of v1.2 — is untracked, with no recovery
-point. Aaron was asked twice and has not yet answered. **Commit before doing anything else.**
+This section warned that nothing was committed and there was no recovery point. Resolved on
+2026-08-31: v1 through v1.3 went in as the initial commit, and the tree has been committed at
+each green boundary since.
 
 ## v1.1 — notation (complete)
 
