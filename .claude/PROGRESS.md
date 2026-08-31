@@ -104,9 +104,18 @@ looking at the PNGs.
 
 ### Left undone, deliberately
 
-**There is no `LICENSE` file in the repository.** The About box links to the canonical MIT text at
-`opensource.org/license/mit` rather than to a copy in the repo, because there is no published remote
-to link a file to. Adding one needs a copyright holder name, which is the user's call, not a guess.
+A `LICENSE` file was added on 2026-08-31 (MIT, `Copyright (c) 2026 Aaron Brata Aditama` —
+the holder name was derived from the GitHub username, not supplied, so it is worth confirming).
+Its wording was verified word-for-word against SkiaSharp's plain-text MIT licence in the NuGet
+cache: 162 words, zero differences.
+
+The About box still links to `opensource.org/license/mit` rather than to the repo copy, deliberately —
+the canonical text always resolves, whereas a link into a private repository does not.
+
+**Still undone:** the self-contained exe redistributes Avalonia, DryWetMIDI, SkiaSharp,
+HarfBuzzSharp, CommunityToolkit.Mvvm and the Inter font, and ships none of their notices. Inter is
+under the SIL Open Font License, which *requires* its licence travel with the redistribution, so a
+THIRD-PARTY-NOTICES file is a real gap rather than a tidiness one.
 
 ---
 

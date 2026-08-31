@@ -53,10 +53,16 @@ the mechanism, and `CLAUDE.md` for the full history.
 
 ## Project status
 
-Phases 1–9 of the build are complete: the domain model, ~171-scale library, key detection, the
-restyle engine, channel allocation for microtonal export, and the Avalonia UI (piano roll, track
-list, scale picker with live restyling) all work end to end. Audio playback (phase 10) is in
-progress. MusicXML export and a notated staff view are deferred to a v1.1 release.
+v1 is complete, with three releases on top of it. All twelve build phases are done — the
+domain model, the 171-scale library, key detection, the restyle engine, channel allocation for
+microtonal export, audio playback with an A/B switch, and the portable single-file publish — as
+are the three features v1 deferred: MusicXML export, the staff view and the degree view.
+
+Since then: **v1.2** rebuilt the notation as a wrapped page of systems with a following playhead
+and turned the degree view into a scale wheel; **v1.3** added click-to-seek on the staff and
+real clef and rest glyph outlines; **v1.4** added the About window.
+
+Last verified green: 1314 tests, 0 warnings, and a portable publish of exactly one 50.2 MB file.
 
 ## Where the real documentation lives
 
@@ -67,3 +73,12 @@ This README is deliberately short. For anything deeper:
 - [`.claude/PROGRESS.md`](.claude/PROGRESS.md) — phase-by-phase implementation state and handover
   notes
 - [`CLAUDE.md`](CLAUDE.md) — architecture and the load-bearing invariants behind the design
+
+## Licence
+
+MIDIRestyle is released under the [MIT License](LICENSE).
+
+Note that the shipped `.exe` is self-contained and so redistributes its dependencies (Avalonia,
+DryWetMIDI, SkiaSharp, HarfBuzzSharp, CommunityToolkit.Mvvm and the Inter font). Those carry their
+own licences — MIT in most cases, the SIL Open Font License for Inter — and this repository does
+not yet bundle their notices.
