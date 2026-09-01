@@ -1,3 +1,5 @@
+<img src="docs/icon.png" alt="MIDIRestyle" width="128" height="128">
+
 # MIDIRestyle
 
 MIDIRestyle is a Windows desktop app that loads a MIDI file and re-maps its musical scale into a
