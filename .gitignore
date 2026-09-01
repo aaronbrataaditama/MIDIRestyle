@@ -71,3 +71,9 @@ coverage*.info
 ## Canonical scale definitions live in src/MidiRestyle.App/Assets/scales/ and ARE tracked.
 MIDIRestyle.settings.json
 /scales/
+
+## Claude Code local settings
+## Machine-specific tool permissions. They record local paths, so they carry the OS username -
+## and until now they were ignored only by the user's *global* ignore file, which does not travel
+## with the repository. Declared here so a clone on another machine cannot commit them by accident.
+.claude/settings.local.json
