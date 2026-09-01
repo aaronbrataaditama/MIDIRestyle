@@ -455,6 +455,19 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
   file is tens of thousands of notes.
 - DryWetMIDI raises playback events on a background thread. Marshal playhead updates with
   `Dispatcher.UIThread.Post` on a ~60 Hz timer — never per MIDI event.
+- **The third-party notices are embedded in the exe, and the publish gate is why.** The
+  single-file build redistributes every dependency plus the .NET runtime, and the Inter faces
+  compiled into it are under the SIL Open Font License, which requires the licence travel with the
+  font. `AssertSingleFilePublish` allows exactly one file in the publish folder, so the notices
+  **cannot** sit beside the exe - the csproj embeds the repository-root `THIRD-PARTY-NOTICES.txt`
+  under a fixed `LogicalName` and the About box opens it. Adding a package silently widens what is
+  redistributed, so `ThirdPartyNoticesTests` names every shipped component and fails when one is
+  missing. Two traps when regenerating it: the redistributed set is **not** the package list (the
+  Linux, macOS and WebAssembly native-asset packages resolve but never land in a win-x64 publish -
+  take the list from an unbundled publish instead), and `Avalonia.Fonts.Inter` declares MIT in its
+  nuspec while shipping no font licence at all, because that MIT covers Avalonia's code and not the
+  font. Inter's real notice was read out of the font binaries' own `name` table. Never reproduce a
+  licence text from memory.
 - Portable-first file handling: settings and the writable `scales/` folder live beside the exe,
   falling back to `%APPDATA%` when that directory is read-only (read-only USB, Program Files).
   Canonical scale JSON is embedded as an assembly resource *and* written out on first run, so a

@@ -35,6 +35,17 @@ public partial class AboutWindow : Window
     private void OnDonateClicked(object? sender, RoutedEventArgs e) =>
         OpenInBrowser(AboutViewModel.DonationUrl);
 
+    /// <summary>
+    /// Opens the bundled licence notices, as a dialog over this one.
+    /// </summary>
+    /// <remarks>
+    /// Shown in-app rather than launched in a browser like the other two links, and that is the
+    /// whole point: the notices have to be available to someone holding nothing but the .exe, so
+    /// they are embedded in it. A link to a web copy would be no notice at all offline.
+    /// </remarks>
+    private async void OnNoticesClicked(object? sender, RoutedEventArgs e) =>
+        await new ThirdPartyNoticesWindow().ShowDialog(this).ConfigureAwait(true);
+
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close();
 
     /// <summary>

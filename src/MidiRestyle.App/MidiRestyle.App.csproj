@@ -106,4 +106,22 @@
     <AvaloniaResource Include="Assets/**" />
   </ItemGroup>
 
+  <!--
+    The third-party licence notices, embedded rather than copied beside the exe.
+
+    That is forced, not preferred. AssertSingleFilePublish (below) requires the publish folder to
+    hold exactly one file, so a notices file cannot sit next to the binary - and the obligation is
+    real: the Inter faces compiled into the exe are under the SIL Open Font License, which requires
+    the licence travel with the font. So the text has to go *inside* the executable.
+
+    Included from the repository root rather than copied into this project, so there is one file
+    and it cannot drift from the copy people read on GitHub. LogicalName is set explicitly because
+    the default name is derived from the item's path, which for a file reached by ".." is neither
+    stable nor guessable - the loader needs a name it can hard-code.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../THIRD-PARTY-NOTICES.txt"
+                      LogicalName="MIDIRestyle.THIRD-PARTY-NOTICES.txt" />
+  </ItemGroup>
+
 </Project>

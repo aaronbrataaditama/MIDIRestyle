@@ -108,6 +108,21 @@
         </Button>
       </WrapPanel>
 
+      <!--
+        A second line rather than a clause appended to the one above: the licence sentence is about
+        this project, this one is about the software it carries, and running them together reads as
+        though the MIT License covered both.
+      -->
+      <WrapPanel Orientation="Horizontal">
+        <TextBlock Classes="subtle" Text="{x:Static vm:AboutViewModel.NoticesLine}" Margin="0,0,4,0" />
+        <Button Classes="link" Click="OnNoticesClicked">
+          <TextBlock Text="{x:Static vm:AboutViewModel.NoticesLinkText}"
+                     FontSize="12"
+                     TextDecorations="Underline"
+                     Foreground="{DynamicResource SystemAccentColor}" />
+        </Button>
+      </WrapPanel>
+
     </StackPanel>
 
   </DockPanel>

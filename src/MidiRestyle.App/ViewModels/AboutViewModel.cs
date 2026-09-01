@@ -51,6 +51,21 @@ public sealed partial class AboutViewModel : ObservableObject
 
     public const string LicenseLinkText = "MIT License";
 
+    /// <summary>
+    /// The sentence pointing at the bundled third-party licences, with
+    /// <see cref="NoticesLinkText"/> shown beside it as a link.
+    /// </summary>
+    /// <remarks>
+    /// Named explicitly here rather than left implicit under "MIT License" above, because the two
+    /// are different claims and conflating them is the mistake worth preventing: the MIT line is
+    /// about MIDIRestyle's own code, while this one is about everybody else's, which happens to
+    /// include a typeface under a licence that requires the notice be shown at all.
+    /// </remarks>
+    public const string NoticesLine =
+        "The executable also bundles its dependencies and the .NET runtime - see the";
+
+    public const string NoticesLinkText = "third-party notices";
+
     /// <summary>The donation ask, kept to the small print at the foot of the window.</summary>
     public const string DonationPrompt =
         "If you find this tool useful, please consider donating to my PayPal account:";

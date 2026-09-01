@@ -80,7 +80,13 @@ This README is deliberately short. For anything deeper:
 
 MIDIRestyle is released under the [MIT License](LICENSE).
 
-Note that the shipped `.exe` is self-contained and so redistributes its dependencies (Avalonia,
-DryWetMIDI, SkiaSharp, HarfBuzzSharp, CommunityToolkit.Mvvm and the Inter font). Those carry their
-own licences — MIT in most cases, the SIL Open Font License for Inter — and this repository does
-not yet bundle their notices.
+The shipped `.exe` is self-contained, so it also redistributes its dependencies and the .NET
+runtime. Their licences and copyright notices are reproduced in full in
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) — MIT for most of them, BSD for ANGLE and Skia,
+and the SIL Open Font License for the Inter typeface, which requires that its licence be
+distributed along with the font.
+
+That last requirement is why the notices are embedded in the executable as well as published here.
+A single-file build leaves no room for a companion file beside the `.exe`, so the text travels
+inside it and can be read from **About → third-party notices**; a copied `.exe` carries its notices
+with it.

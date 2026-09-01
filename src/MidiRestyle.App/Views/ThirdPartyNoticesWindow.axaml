@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MidiRestyle.App.ViewModels"
+        x:Class="MidiRestyle.App.Views.ThirdPartyNoticesWindow"
+        x:DataType="vm:ThirdPartyNoticesViewModel"
+        Title="Third-party notices"
+        Icon="avares://MIDIRestyle/Assets/app-icon.ico"
+        Width="860"
+        Height="640"
+        MinWidth="480"
+        MinHeight="320"
+        WindowStartupLocation="CenterOwner">
+
+  <DockPanel Margin="18,16">
+
+    <StackPanel DockPanel.Dock="Bottom" Margin="0,14,0,0">
+      <Button Content="Close" Click="OnCloseClicked"
+              IsDefault="True" IsCancel="True"
+              HorizontalAlignment="Right" MinWidth="88" />
+    </StackPanel>
+
+    <TextBlock DockPanel.Dock="Top"
+               Text="{x:Static vm:ThirdPartyNoticesViewModel.Intro}"
+               TextWrapping="Wrap"
+               Opacity="0.75"
+               FontSize="12"
+               LineHeight="17"
+               Margin="0,0,0,12" />
+
+    <!--
+      The document is ~4,600 lines of licence text laid out as fixed-width columns of rules and
+      section banners, so it is shown monospaced and unwrapped: re-flowing it to the window width
+      would break every banner and turn the whole thing into ragged prose.
+
+      Selectable rather than a read-only TextBox. Both are non-virtualising in Avalonia 12, so
+      neither wins on layout cost, but a TextBox brings a caret, an editing context menu and a
+      focus rect to a document nobody can edit - controls that imply an affordance the window does
+      not have.
+    -->
+    <Border BorderThickness="1"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            CornerRadius="3">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto"
+                    Padding="12,10">
+        <SelectableTextBlock Text="{Binding Text}"
+                             FontFamily="Consolas,Menlo,DejaVu Sans Mono,monospace"
+                             FontSize="12"
+                             TextWrapping="NoWrap" />
+      </ScrollViewer>
+    </Border>
+
+  </DockPanel>
+</Window>
