@@ -62,9 +62,9 @@ are the three features v1 deferred: MusicXML export, the staff view and the degr
 
 Since then: **v1.2** rebuilt the notation as a wrapped page of systems with a following playhead
 and turned the degree view into a scale wheel; **v1.3** added click-to-seek on the staff and
-real clef and rest glyph outlines; **v1.4** added the About window.
+real clef and rest glyph outlines; **v1.4** added the About window and bundled the third-party licence notices.
 
-Last verified green: 1314 tests, 0 warnings, and a portable publish of exactly one 50.2 MB file.
+Last verified green: 1334 tests, 0 warnings, and a portable publish of exactly one 50.3 MB file.
 
 ## Where the real documentation lives
 

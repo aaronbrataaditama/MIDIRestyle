@@ -137,8 +137,8 @@ Files: `ViewModels/AboutViewModel.cs`, `Views/AboutWindow.axaml{,.cs}`, wired fr
   presenter-level state setters, and a style setter can.
 - **`InformationalVersion` carries a `+<commit sha>` suffix in every configuration, Debug
   included.** Confirmed in both `obj/Debug` and `obj/Release` generated `AssemblyInfo.cs`, and
-  stamped on the published exe as `1.3.0+<commit sha>`. `AboutViewModel.ReadVersion` cuts at the plus
-  sign; without that the box would show the sha. The csproj now carries `<Version>1.3.0</Version>`
+  stamped on the published exe as `1.4.0+<commit sha>`. `AboutViewModel.ReadVersion` cuts at the plus
+  sign; without that the box would show the sha. The csproj now carries `<Version>1.4.0</Version>`
   so the About box reads the build rather than restating it.
 - **A C# string constant meant to reflow must be one logical line per paragraph.** Written as a raw
   string literal across source lines, the source wrapping is preserved verbatim and the `TextBlock`
