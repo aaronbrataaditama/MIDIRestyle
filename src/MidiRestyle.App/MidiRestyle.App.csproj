@@ -7,7 +7,7 @@
 
     <!-- The shipping version. Read at runtime by AboutViewModel rather than restated in the
          markup, so the About box cannot drift out of step with what was actually built. -->
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- The exe's own icon, as Explorer, the taskbar and shortcuts see it. Nine sizes from 16 to

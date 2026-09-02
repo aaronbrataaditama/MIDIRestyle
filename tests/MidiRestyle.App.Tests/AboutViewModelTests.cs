@@ -55,7 +55,7 @@ public class AboutViewModelTests
     {
         // Pins the csproj <Version> to what the About box will actually print, so bumping one
         // without the other cannot ship silently.
-        AboutViewModel.DisplayVersion.Should().StartWith("1.4");
+        AboutViewModel.DisplayVersion.Should().StartWith("1.5");
     }
 
     [Fact]
