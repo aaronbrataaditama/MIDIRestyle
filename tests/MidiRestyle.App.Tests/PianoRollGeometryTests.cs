@@ -268,4 +268,75 @@ public class PianoRollGeometryTests
         fromLarge.Should().Be(fromSmall,
             "a hundredfold larger file shows the same notes in the same viewport");
     }
+
+    // --- the keyboard gutter and the bar ruler ---------------------------------------------------
+
+    /// <summary>
+    /// The grid starts where the keyboard ends, and one tick under the playhead is one place.
+    /// </summary>
+    private static RollViewport Inset(double gutter = 46, double ruler = 19) =>
+        new(ScrollTicks: 0, TopCents: 7200, Width: 1000, Height: 600,
+            PixelsPerTick: 0.5, PixelsPerCent: 0.25, GutterWidth: gutter, RulerHeight: ruler);
+
+    [Fact]
+    public void TheFirstTickIsDrawnAtTheEdgeOfTheKeyboardNotTheEdgeOfTheControl()
+    {
+        RollViewport viewport = Inset();
+
+        viewport.XForTick(0).Should().Be(46);
+        viewport.YForCents(7200).Should().Be(19);
+    }
+
+    /// <summary>
+    /// The extent is the grid, not the control.
+    /// </summary>
+    /// <remarks>
+    /// Measured against the whole control the viewport claims more music on screen than there is,
+    /// and the last bar sits permanently just past the right edge with the scrollbar already at its
+    /// end - a subtle, permanent off-by-a-gutter that no single frame makes obvious.
+    /// </remarks>
+    [Fact]
+    public void TheVisibleSpanExcludesTheFurniture()
+    {
+        RollViewport viewport = Inset();
+
+        viewport.NoteAreaWidth.Should().Be(1000 - 46);
+        viewport.NoteAreaHeight.Should().Be(600 - 19);
+        viewport.EndTicks.Should().Be((1000 - 46) / 0.5);
+        viewport.BottomCents.Should().Be(7200 - ((600 - 19) / 0.25));
+    }
+
+    [Fact]
+    public void AGutterWiderThanTheControlLeavesNoGridRatherThanANegativeOne()
+    {
+        RollViewport viewport = Inset(gutter: 2000, ruler: 900);
+
+        viewport.NoteAreaWidth.Should().Be(0);
+        viewport.NoteAreaHeight.Should().Be(0);
+        viewport.EndTicks.Should().Be(viewport.ScrollTicks);
+    }
+
+    /// <summary>A roll drawn without furniture is the old behaviour, unchanged.</summary>
+    [Fact]
+    public void WithoutFurnitureTheViewportIsTheWholeControl()
+    {
+        RollViewport viewport = new(0, 7200, 1000, 600, 0.5, 0.25);
+
+        viewport.XForTick(0).Should().Be(0);
+        viewport.YForCents(7200).Should().Be(0);
+        viewport.EndTicks.Should().Be(2000);
+    }
+
+    [Fact]
+    public void CulledNotesAreOffsetByTheKeyboardToo()
+    {
+        RollNote[] notes = [new RollNote(0, 480, 7200, 90)];
+        NoteQuad[] quads = new NoteQuad[4];
+
+        int count = PianoRollGeometry.Cull(notes, 480, Inset(), quads);
+
+        count.Should().Be(1);
+        quads[0].X.Should().Be(46, "a note at tick zero starts at the edge of the keyboard");
+        quads[0].Y.Should().BeApproximately(19 - (quads[0].Height / 2.0), 1.0);
+    }
 }

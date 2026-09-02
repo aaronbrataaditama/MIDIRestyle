@@ -1,4 +1,5 @@
 using MidiRestyle.Core.Model;
+using MidiRestyle.Core.Notation;
 
 namespace MidiRestyle.App.ViewModels;
 
@@ -34,9 +35,41 @@ public sealed class MetadataViewModel(MidiProject project)
     public int NoteCount => _project.TotalNoteCount;
 
     /// <summary>
-    /// Duration as <c>m:ss</c>, or a stated absence. Null for SMPTE files, whose timebase is
-    /// absolute rather than musical and which therefore have no tempo map to integrate.
+    /// The barlines this file is read on, built once. Shared with the transport readout so the bar
+    /// the status line counts up to is the same one the metadata pane names.
     /// </summary>
+    /// <remarks>
+    /// Empty for a SMPTE file: no PPQN means no notated beat, so a bar number would be invented
+    /// rather than read.
+    /// </remarks>
+    public IReadOnlyList<MeasureSpan> Measures => _measures ??= BuildMeasures();
+
+    private IReadOnlyList<MeasureSpan>? _measures;
+
+    private IReadOnlyList<MeasureSpan> BuildMeasures() =>
+        _project.Division is TicksPerQuarterNote ppqn && ppqn.Ticks > 0
+            ? MeasureGrid.Build(_project.TimeSignatures, _project.DurationTicks, ppqn.Ticks)
+            : [];
+
+    /// <summary>How many bars the piece runs to, or null when the timebase cannot say.</summary>
+    public int? BarCount => Measures.Count == 0 ? null : Measures.Count;
+
+    /// <summary>
+    /// Duration as <c>m:ss.t</c> with the bar count beside it, or a stated absence.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The two belong on one line because they answer the same question in the two units anyone
+    /// reading a MIDI file thinks in - wall clock and bars - and neither is much use alone: seconds
+    /// say how long the preview takes, bars say where in the piece you are.
+    /// </para>
+    /// <para>
+    /// Tenths rather than whole seconds because a short loop is routine here, and <c>0:14</c> and
+    /// <c>0:14.4</c> are meaningfully different lengths when the file is eight bars long. Both are
+    /// null for SMPTE files, whose timebase is absolute rather than musical and which therefore have
+    /// no tempo map to integrate and no notated bar to count.
+    /// </para>
+    /// </remarks>
     public string DurationText
     {
         get
@@ -47,9 +80,11 @@ public sealed class MetadataViewModel(MidiProject project)
             }
 
             TimeSpan span = TimeSpan.FromSeconds(seconds);
-            return span.TotalHours >= 1
-                ? $"{(int)span.TotalHours}:{span.Minutes:00}:{span.Seconds:00}"
-                : $"{span.Minutes}:{span.Seconds:00}";
+            string clock = span.TotalHours >= 1
+                ? $"{(int)span.TotalHours}:{span.Minutes:00}:{span.Seconds:00}.{span.Milliseconds / 100}"
+                : $"{span.Minutes}:{span.Seconds:00}.{span.Milliseconds / 100}";
+
+            return BarCount is { } bars ? $"{clock} · {bars} bar{(bars == 1 ? "" : "s")}" : clock;
         }
     }
 

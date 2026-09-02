@@ -23,26 +23,49 @@ public readonly record struct NoteQuad(double X, double Y, double Width, double 
 /// <param name="Height">Viewport height in pixels.</param>
 /// <param name="PixelsPerTick">Horizontal zoom.</param>
 /// <param name="PixelsPerCent">Vertical zoom. A semitone row is 100x this.</param>
+/// <param name="GutterWidth">
+/// Width of the keyboard column down the left edge. Zero for a roll drawn without one.
+/// </param>
+/// <param name="RulerHeight">
+/// Height of the bar-number strip across the top. Zero for a roll drawn without one.
+/// </param>
 public readonly record struct RollViewport(
     double ScrollTicks,
     double TopCents,
     double Width,
     double Height,
     double PixelsPerTick,
-    double PixelsPerCent)
+    double PixelsPerCent,
+    double GutterWidth = 0,
+    double RulerHeight = 0)
 {
+    /// <summary>
+    /// Width of the notes themselves, once the keyboard has taken its column.
+    /// </summary>
+    /// <remarks>
+    /// Every horizontal question - what tick is at the right edge, how much music is on screen -
+    /// is asked of this rather than of <see cref="Width"/>. Measuring the viewport as the whole
+    /// control while drawing the notes inset by the gutter puts the last <see cref="GutterWidth"/>
+    /// pixels of music off the right-hand edge, which reads as the file being truncated.
+    /// </remarks>
+    public double NoteAreaWidth => Math.Max(0, Width - GutterWidth);
+
+    /// <summary>Height of the note grid, once the bar ruler has taken its strip.</summary>
+    public double NoteAreaHeight => Math.Max(0, Height - RulerHeight);
+
     /// <summary>Tick at the right edge.</summary>
-    public double EndTicks => ScrollTicks + (PixelsPerTick > 0 ? Width / PixelsPerTick : 0);
+    public double EndTicks => ScrollTicks + (PixelsPerTick > 0 ? NoteAreaWidth / PixelsPerTick : 0);
 
     /// <summary>Cents at the bottom edge. Lower than <see cref="TopCents"/>.</summary>
-    public double BottomCents => TopCents - (PixelsPerCent > 0 ? Height / PixelsPerCent : 0);
+    public double BottomCents =>
+        TopCents - (PixelsPerCent > 0 ? NoteAreaHeight / PixelsPerCent : 0);
 
     /// <summary>Height of one semitone row, in pixels.</summary>
     public double RowHeight => PixelsPerCent * 100.0;
 
-    public double XForTick(double tick) => (tick - ScrollTicks) * PixelsPerTick;
+    public double XForTick(double tick) => GutterWidth + ((tick - ScrollTicks) * PixelsPerTick);
 
-    public double YForCents(double cents) => (TopCents - cents) * PixelsPerCent;
+    public double YForCents(double cents) => RulerHeight + ((TopCents - cents) * PixelsPerCent);
 }
 
 /// <summary>

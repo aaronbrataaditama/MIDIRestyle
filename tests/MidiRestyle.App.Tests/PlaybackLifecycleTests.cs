@@ -215,13 +215,23 @@ public class PlaybackLifecycleTests
         roll.ScrollTicks.Should().Be(500);
     }
 
+    /// <summary>
+    /// The extent is the <em>grid</em>, not the control.
+    /// </summary>
+    /// <remarks>
+    /// The keyboard column and the bar ruler are furniture, not timeline: measured against the whole
+    /// control the scrollbar would report more music on screen than there is, and the last bar would
+    /// sit permanently just past the right-hand edge with the thumb already at the end.
+    /// </remarks>
     [Fact]
     public void TheViewportReportsItsExtentSoAScrollbarCanSizeItself()
     {
         PianoRoll roll = Roll();
 
-        roll.VisibleTicks.Should().BeApproximately(2000, 1e-6, "1000 px at 0.5 px/tick");
-        roll.VisibleCents.Should().BeApproximately(2400, 1e-6, "600 px at 0.25 px/cent");
+        roll.VisibleTicks.Should().BeApproximately(
+            (1000 - PianoRoll.GutterWidth) / 0.5, 1e-6, "1000 px less the keyboard, at 0.5 px/tick");
+        roll.VisibleCents.Should().BeApproximately(
+            (600 - PianoRoll.RulerHeight) / 0.25, 1e-6, "600 px less the ruler, at 0.25 px/cent");
     }
 
     [Fact]
