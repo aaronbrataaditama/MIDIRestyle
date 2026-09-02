@@ -476,6 +476,112 @@ public class StylePanelViewModelTests
         vm.BuildSettings().TargetScale.Id.Should().Be("eastasia.chinese.gong");
     }
 
+    // ------------------------------------------------------------------ the tuning chip
+
+    /// <summary>
+    /// The chip states a fact the user can act on, where the badge graded the scale against a
+    /// standard it never chose. Both still exist - the grade is what decides when the warning fires.
+    /// </summary>
+    [Fact]
+    public void AScaleOnTheSemitoneGridIsChippedTwelveTet()
+    {
+        StylePanelViewModel vm = Panel();
+        ScaleListItem row = vm.Items.Single(i => i.Scale?.Id == "eastasia.chinese.gong");
+
+        row.TuningLabel.Should().Be("12-TET");
+        row.IsTwelveTet.Should().BeTrue();
+        row.HasTuningLabel.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AScaleOffTheGridIsChippedWithItsWorstDeviation()
+    {
+        StylePanelViewModel vm = Panel();
+        ScaleListItem row = vm.Items.Single(i => i.Scale?.Id == "seasia.gamelan.slendro");
+
+        row.TuningLabel.Should().Be("±40¢", "Slendro's worst degree is 40 cents off its semitone");
+        row.IsTwelveTet.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AFractionalDeviationKeepsOneDecimalRatherThanRoundingToNothing()
+    {
+        StylePanelViewModel vm = Panel();
+        ScaleListItem row = vm.Items.Single(i => i.Scale?.Id == "turkish.makam.rast");
+
+        row.TuningLabel.Should().Be("±15.6¢");
+    }
+
+    [Fact]
+    public void ARegionHeaderCarriesNoChip()
+    {
+        StylePanelViewModel vm = Panel();
+        ScaleListItem header = vm.Items.First(i => i.IsHeader);
+
+        header.TuningLabel.Should().BeNull();
+        header.HasTuningLabel.Should().BeFalse();
+        header.IsTwelveTet.Should().BeFalse("a header is not a scale, on or off the grid");
+    }
+
+    // ------------------------------------------------------------------ the degree ladder
+
+    [Fact]
+    public void TheLadderCaptionNamesTheSizeAndTheRegion()
+    {
+        StylePanelViewModel vm = Panel();
+        vm.SelectedScale = Find(vm, "seasia.gamelan.slendro");
+
+        vm.HasLadder.Should().BeTrue();
+        vm.LadderCaption.Should().Be("5 degrees · Southeast Asia");
+    }
+
+    [Fact]
+    public void WithNothingSelectedTheLadderHasNothingToSay()
+    {
+        StylePanelViewModel vm = Panel();
+
+        vm.HasLadder.Should().BeFalse();
+        vm.LadderCaption.Should().BeEmpty();
+        vm.DeviationSummary.Should().BeEmpty();
+        vm.BendClusterSummary.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TheDeviationLineStatesTheWorstOffsetAndWhatItCosts()
+    {
+        StylePanelViewModel vm = Panel();
+        vm.SelectedScale = Find(vm, "seasia.gamelan.slendro");
+
+        vm.DeviationSummary.Should().Be("Deviation ±40¢");
+        vm.BendClusterSummary.Should().Be(
+            "5 bend clusters at 5¢",
+            "the cluster count, not the degree count, is what the channel budget is spent on");
+    }
+
+    [Fact]
+    public void AGridScaleNeedsNoBendAndSaysSo()
+    {
+        StylePanelViewModel vm = Panel();
+        vm.SelectedScale = Find(vm, "eastasia.chinese.gong");
+
+        vm.DeviationSummary.Should().Be("Exactly 12-TET");
+        vm.BendClusterSummary.Should().Be("no pitch bend needed");
+    }
+
+    /// <summary>
+    /// The tolerance is a control the user can move, and the cluster count moves with it - so the
+    /// line has to be recomputed against the tolerance in force, not the default.
+    /// </summary>
+    [Fact]
+    public void WideningTheToleranceCollapsesClustersAndTheLineFollows()
+    {
+        StylePanelViewModel vm = Panel();
+        vm.SelectedScale = Find(vm, "seasia.gamelan.slendro");
+        vm.ToleranceCents = 25;
+
+        vm.BendClusterSummary.Should().Be("3 bend clusters at 25¢");
+    }
+
     // ------------------------------------------------------------------ notification and browsing
 
     [Fact]
@@ -492,7 +598,27 @@ public class StylePanelViewModelTests
             .And.Contain(nameof(StylePanelViewModel.FidelityLabel))
             .And.Contain(nameof(StylePanelViewModel.FidelityDescription))
             .And.Contain(nameof(StylePanelViewModel.IsFidelityWarning))
-            .And.Contain(nameof(StylePanelViewModel.FidelityWarning));
+            .And.Contain(nameof(StylePanelViewModel.FidelityWarning))
+            .And.Contain(nameof(StylePanelViewModel.LadderCaption))
+            .And.Contain(nameof(StylePanelViewModel.DeviationSummary))
+            .And.Contain(nameof(StylePanelViewModel.BendClusterSummary))
+            .And.Contain(nameof(StylePanelViewModel.HasLadder));
+    }
+
+    /// <summary>
+    /// The cluster count depends on the tolerance, so the card has to be told when it moves - the
+    /// card is bound to, and a right value nobody announced is the bug this suite exists for.
+    /// </summary>
+    [Fact]
+    public void ChangingTheToleranceRaisesTheDeviationCard()
+    {
+        StylePanelViewModel vm = Panel();
+        vm.SelectedScale = Find(vm, "seasia.gamelan.slendro");
+
+        List<string> raised = Watch(vm);
+        vm.ToleranceCents = 25;
+
+        raised.Should().Contain(nameof(StylePanelViewModel.BendClusterSummary));
     }
 
     [Fact]

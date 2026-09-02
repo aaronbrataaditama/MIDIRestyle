@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MidiRestyle.Core.Analysis;
@@ -98,6 +99,35 @@ public sealed class ScaleListItem
 
     /// <summary>The badge chip's text, or null on a header.</summary>
     public string? FidelityLabel => Fidelity?.Label;
+
+    /// <summary>
+    /// The tuning chip: <c>12-TET</c> for a scale that sits on the semitone grid, otherwise the
+    /// worst deviation it asks pitch bend to carry, as <c>±50¢</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This replaces <c>Exact / Close / Approximate</c> on the row. Those three words grade a scale
+    /// against a standard the user did not choose and cannot act on - "Approximate" reads as a
+    /// defect in Maqam Saba rather than as a fact about twelve equal semitones. The two facts a
+    /// browser of this list actually wants are whether the scale will play back on plain 12-TET, and
+    /// if not, how far off it is; both are here, in the units the rest of the app talks in.
+    /// </para>
+    /// <para>
+    /// <see cref="FidelityLabel"/> is kept beside it, unchanged: the badge grades, the chip states,
+    /// and the fidelity <em>warning</em> still needs the grade to decide when to fire.
+    /// </para>
+    /// </remarks>
+    public string? TuningLabel => Scale is not { } scale
+        ? null
+        : scale.IsTwelveTet
+            ? "12-TET"
+            : string.Create(CultureInfo.InvariantCulture, $"±{scale.MaxOffsetCents:0.#}¢");
+
+    /// <summary>Whether the chip should read as calm rather than as "this needs pitch bend".</summary>
+    public bool IsTwelveTet => Scale?.IsTwelveTet == true;
+
+    /// <summary>Whether the chip has anything to show. False on a header.</summary>
+    public bool HasTuningLabel => Scale is not null;
 
     public override string ToString() => IsHeader ? $"[{Region}]" : Text;
 }
@@ -392,6 +422,58 @@ public sealed partial class StylePanelViewModel : ObservableObject
           + $"{Fidelity!.MaxDeviationCents:0.#} cents from where they belong. "
           + "Switch output to Microtonal to hear the scale as tuned."
         : null;
+
+    // ------------------------------------------------------------------ the degree ladder
+
+    /// <summary>
+    /// The ladder card's caption: <c>7 degrees · Middle East</c>. Empty when nothing is selected.
+    /// </summary>
+    public string LadderCaption => SelectedScale is { } scale
+        ? $"{scale.DegreeCount} degrees · {scale.Region}"
+        : string.Empty;
+
+    /// <summary>
+    /// The deviation line beneath the ladder: <c>Deviation ±50¢</c>, or that the scale is already
+    /// on the grid.
+    /// </summary>
+    public string DeviationSummary => SelectedScale is not { } scale
+        ? string.Empty
+        : scale.IsTwelveTet
+            ? "Exactly 12-TET"
+            : string.Create(CultureInfo.InvariantCulture, $"Deviation ±{scale.MaxOffsetCents:0.#}¢");
+
+    /// <summary>
+    /// What the deviation costs in channels: <c>2 bend clusters at 5¢</c>.
+    /// </summary>
+    /// <remarks>
+    /// The cluster count, not the degree count, is the figure that decides whether a project fits in
+    /// its fifteen channels - Maqam Rast's two neutral degrees share one offset and therefore one
+    /// channel. Shown beside the tolerance it was computed at, because that tolerance is a control
+    /// the user can move and the count moves with it.
+    /// </remarks>
+    public string BendClusterSummary
+    {
+        get
+        {
+            if (SelectedScale is not { } scale)
+            {
+                return string.Empty;
+            }
+
+            if (scale.IsTwelveTet)
+            {
+                return "no pitch bend needed";
+            }
+
+            int clusters = OffsetClusterer.ClusterCount(scale, ToleranceCents);
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"{clusters} bend cluster{(clusters == 1 ? "" : "s")} at {ToleranceCents:0.#}¢");
+        }
+    }
+
+    /// <summary>Whether the ladder card has a scale to draw. False before anything is selected.</summary>
+    public bool HasLadder => SelectedScale is not null;
 
     /// <summary>Whether output will actually sit on the semitone grid, which is what the badge asks.</summary>
     private bool OutputIsTwelveTet => OutputMode switch
@@ -779,6 +861,10 @@ public sealed partial class StylePanelViewModel : ObservableObject
         OnPropertyChanged(nameof(FidelityDescription));
         OnPropertyChanged(nameof(IsFidelityWarning));
         OnPropertyChanged(nameof(FidelityWarning));
+        OnPropertyChanged(nameof(LadderCaption));
+        OnPropertyChanged(nameof(DeviationSummary));
+        OnPropertyChanged(nameof(BendClusterSummary));
+        OnPropertyChanged(nameof(HasLadder));
     }
 
     private void RaiseReadinessDependents()

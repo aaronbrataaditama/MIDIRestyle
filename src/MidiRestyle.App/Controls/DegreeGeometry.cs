@@ -26,31 +26,20 @@ public readonly record struct WheelNote(long StartTicks, long EndTicks, double C
 /// </remarks>
 public readonly record struct WheelLayout(double CenterX, double CenterY, double Radius)
 {
-    /// <summary>The scale ring itself - degree markers, 12-TET ticks and deviation whiskers.</summary>
+    /// <summary>The scale ring itself - degree markers, 12-TET ticks and deviation arcs.</summary>
     public double RingRadius => Radius * DegreeGeometry.RingRadiusFraction;
 
-    /// <summary>Where a degree's number-and-cents label block is centred.</summary>
-    public double LabelRadius => Radius * DegreeGeometry.LabelRadiusFraction;
+    /// <summary>Where a degree's number sits: on its own spoke, just inside the ring.</summary>
+    public double NumberRadius => Radius * DegreeGeometry.NumberRadiusFraction;
 
-    /// <summary>Radius a sounding note in the tonic's own octave is plotted at.</summary>
-    public double OctaveBaseRadius => Radius * DegreeGeometry.OctaveBaseFraction;
+    /// <summary>Where the twelve equal-tempered note names sit, just outside the ring.</summary>
+    public double LetterRadius => Radius * DegreeGeometry.LetterRadiusFraction;
 
-    /// <summary>How much further out each octave above the tonic's own is plotted.</summary>
-    public double OctaveSpacing => Radius * DegreeGeometry.OctaveSpacingFraction;
+    /// <summary>Where a degree's cents reading sits, outside the note names.</summary>
+    public double CentsRadius => Radius * DegreeGeometry.CentsRadiusFraction;
 
     /// <summary>Radius kept clear in the middle, so a spoke never runs under the centre readout.</summary>
     public double HubRadius => Radius * DegreeGeometry.HubFraction;
-
-    /// <summary>
-    /// Where the fading trail is drawn - a band just inside the ring, away from the octave rings.
-    /// </summary>
-    /// <remarks>
-    /// The trail deliberately ignores octave and plots pitch class alone. Drawn at each note's own
-    /// octave radius it became a tangle across the middle of the wheel the moment a bass line and a
-    /// melody alternated, and the one thing it is for - the shape of the melodic move - was the first
-    /// thing lost.
-    /// </remarks>
-    public double TrailRadius => Radius * DegreeGeometry.TrailRadiusFraction;
 
     /// <summary>False when the pane is too small to draw anything legible in.</summary>
     public bool IsUsable => Radius >= DegreeGeometry.MinimumUsableRadius;
@@ -58,7 +47,7 @@ public readonly record struct WheelLayout(double CenterX, double CenterY, double
 
 /// <summary>
 /// Pure layout maths for <see cref="DegreeView"/>'s scale wheel: cents to angle, angle to point,
-/// octave to radius, which notes sound at a tick, and how a note's trail fades.
+/// the radii everything is placed at, the twelve reference names, and which notes sound at a tick.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -82,20 +71,11 @@ public static class DegreeGeometry
     /// <summary>Degrees of arc in one full turn, which is one octave.</summary>
     public const double DegreesPerTurn = 360.0;
 
-    public const double RingRadiusFraction = 0.80;
-    public const double LabelRadiusFraction = 0.94;
-    public const double TrailRadiusFraction = 0.715;
-    public const double OctaveBaseFraction = 0.44;
-    public const double OctaveSpacingFraction = 0.10;
-    public const double HubFraction = 0.16;
-
-    /// <summary>
-    /// How many octaves either side of the tonic's own get their own radius before the rings stop
-    /// spreading. Past this a marker would either collide with the label ring outside or with the
-    /// hub inside, and five octaves of a bass line still have to be distinguishable from each other
-    /// - so the outermost rings saturate rather than the inner ones being squeezed flat.
-    /// </summary>
-    public const int MaxOctaveRings = 2;
+    public const double HubFraction = 0.17;
+    public const double NumberRadiusFraction = 0.665;
+    public const double RingRadiusFraction = 0.76;
+    public const double LetterRadiusFraction = 0.865;
+    public const double CentsRadiusFraction = 0.965;
 
     /// <summary>Below this the wheel is not worth drawing - the ring would be thinner than its own markers.</summary>
     public const double MinimumUsableRadius = 30.0;
@@ -152,28 +132,36 @@ public static class DegreeGeometry
     /// </summary>
     public static double NearestTwelveTetCents(double cents) => MidiRounding.ToNearestSemitoneCents(cents);
 
-    // --- octave to radius ----------------------------------------------------------------------
+    // --- the 12-TET reference names -----------------------------------------------------------
 
     /// <summary>
-    /// The radius a note sounding <paramref name="octaveOffset"/> octaves from the tonic's own
-    /// octave is plotted at: inner rings are lower, outer rings higher, so a bass line and a melody
-    /// landing on the same degree do not collapse onto one point.
+    /// The twelve semitone names, sharp-spelled, indexed by pitch class.
     /// </summary>
     /// <remarks>
-    /// Monotonic in <paramref name="octaveOffset"/> up to <see cref="MaxOctaveRings"/> and flat
-    /// beyond it. A file can reach five octaves either side of its tonic and the rings cannot keep
-    /// spreading that far without running into the label ring - but two rings each way is enough to
-    /// read a bass part apart from a melody, which is what the distinction is for.
+    /// Sharps throughout, deliberately. These name the equal-tempered <em>grid</em> the scale is read
+    /// against, not the scale's own degrees - those carry their own spelling in
+    /// <c>Scale.Spelling</c>, which knows whether a maqam wants D flat or C sharp. A reference grid
+    /// that respelled itself per scale would be a second, disagreeing opinion about the same twelve
+    /// pitches.
     /// </remarks>
-    public static double RadiusForOctave(int octaveOffset, double baseRadius, double spacing)
-    {
-        int clamped = Math.Clamp(octaveOffset, -MaxOctaveRings, MaxOctaveRings);
-        return baseRadius + (clamped * spacing);
-    }
+    public static readonly string[] PitchClassNames =
+        ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-    /// <summary>The radius a note sounding at <paramref name="octaveOffset"/> takes on this layout.</summary>
-    public static double RadiusForOctave(in WheelLayout layout, int octaveOffset) =>
-        RadiusForOctave(octaveOffset, layout.OctaveBaseRadius, layout.OctaveSpacing);
+    /// <summary>
+    /// The note name at one of the wheel's twelve reference ticks.
+    /// </summary>
+    /// <remarks>
+    /// The wheel's twelve o'clock is the tonic, not C, so tick zero is whatever the tonic is and the
+    /// names run round from there. Positive modulo, because a tonic pitch class plus a tick index
+    /// wraps past B and C# minus a semitone is B - both routine, and both negative under C#'s <c>%</c>.
+    /// </remarks>
+    public static string NameAtTick(int tonicPitchClass, int tickIndex)
+    {
+        int pitchClass = tonicPitchClass + tickIndex;
+        return PitchClassNames[
+            (((pitchClass % MidiRounding.SemitonesPerOctave) + MidiRounding.SemitonesPerOctave)
+                % MidiRounding.SemitonesPerOctave)];
+    }
 
     // --- the wheel's place in the control --------------------------------------------------------
 
@@ -194,50 +182,6 @@ public static class DegreeGeometry
             usableTop + (usableHeight / 2.0),
             Math.Min(usableWidth, usableHeight) / 2.0);
     }
-
-    // --- the trail -------------------------------------------------------------------------------
-
-    /// <summary>
-    /// How strongly a note attacked at <paramref name="attackTicks"/> still shows at
-    /// <paramref name="playheadTicks"/>: 1 at the attack, fading linearly to 0 one window later, and
-    /// 0 outright for anything older or still in the future.
-    /// </summary>
-    public static double TrailStrength(long attackTicks, long playheadTicks, long windowTicks)
-    {
-        if (windowTicks <= 0)
-        {
-            return 0;
-        }
-
-        double age = playheadTicks - attackTicks;
-        if (age < 0 || age >= windowTicks)
-        {
-            return 0;
-        }
-
-        return 1.0 - (age / windowTicks);
-    }
-
-    /// <summary>
-    /// Buckets a strength into one of <paramref name="stepCount"/> pre-built opacity steps, highest
-    /// index strongest.
-    /// </summary>
-    /// <remarks>
-    /// The trail is the one thing on the control that wants a continuously varying alpha, and a
-    /// brush per note per frame is exactly the allocation the render path is forbidden. Quantising
-    /// to a fixed ladder lets the brushes be built once per palette; at five steps the banding is
-    /// invisible against a fade that lasts under a second.
-    /// </remarks>
-    public static int TrailStep(double strength, int stepCount)
-    {
-        if (stepCount <= 0)
-        {
-            return 0;
-        }
-
-        int step = (int)Math.Floor(strength * stepCount);
-        return Math.Clamp(step, 0, stepCount - 1);
-    }
 }
 
 /// <summary>
@@ -252,32 +196,26 @@ public static class DegreeGeometry
 /// note in the file could reach.
 /// </para>
 /// <para>
-/// Tied continuations count as sounding but not as attacks. A note split across a barline is one
-/// note being held, so the wheel must keep it lit - but it must not re-trigger the trail, which
-/// would show a melodic move that never happened.
+/// A tied continuation counts as sounding. A note split across a barline is one note being held, so
+/// the wheel keeps its degree lit right through the barline rather than blinking at it.
 /// </para>
 /// </remarks>
 public sealed class DegreeWheelIndex
 {
     /// <summary>The index of a score with nothing in it - or of no score at all.</summary>
-    public static readonly DegreeWheelIndex Empty = new([], [], 0);
+    public static readonly DegreeWheelIndex Empty = new([], 0);
 
     private readonly WheelNote[] _notes;
-    private readonly WheelNote[] _attacks;
     private readonly long _maxDurationTicks;
 
-    private DegreeWheelIndex(WheelNote[] notes, WheelNote[] attacks, long maxDurationTicks)
+    private DegreeWheelIndex(WheelNote[] notes, long maxDurationTicks)
     {
         _notes = notes;
-        _attacks = attacks;
         _maxDurationTicks = maxDurationTicks;
     }
 
     /// <summary>How many sounding spans the score contributed, across every part.</summary>
     public int Count => _notes.Length;
-
-    /// <summary>How many of those were fresh attacks rather than tied continuations.</summary>
-    public int AttackCount => _attacks.Length;
 
     /// <summary>The longest single span in the file, which bounds how far a lookup has to walk back.</summary>
     public long MaxDurationTicks => _maxDurationTicks;
@@ -291,7 +229,6 @@ public sealed class DegreeWheelIndex
         }
 
         List<WheelNote> notes = [];
-        List<WheelNote> attacks = [];
         long maxDuration = 0;
 
         foreach (NotationPart part in score.Parts)
@@ -305,13 +242,7 @@ public sealed class DegreeWheelIndex
                         continue;
                     }
 
-                    WheelNote note = new(entry.StartTicks, entry.EndTicks, pitch.Cents);
-                    notes.Add(note);
-
-                    if (entry.Tie is TieState.None or TieState.Start)
-                    {
-                        attacks.Add(note);
-                    }
+                    notes.Add(new WheelNote(entry.StartTicks, entry.EndTicks, pitch.Cents));
 
                     if (entry.DurationTicks > maxDuration)
                     {
@@ -327,14 +258,12 @@ public sealed class DegreeWheelIndex
         }
 
         WheelNote[] sortedNotes = [.. notes];
-        WheelNote[] sortedAttacks = [.. attacks];
 
         // Parts are concatenated, so the merged list restarts at tick zero on every part boundary.
-        // Both searches below assume a single ascending run.
+        // The search below assumes a single ascending run.
         Array.Sort(sortedNotes, static (a, b) => a.StartTicks.CompareTo(b.StartTicks));
-        Array.Sort(sortedAttacks, static (a, b) => a.StartTicks.CompareTo(b.StartTicks));
 
-        return new DegreeWheelIndex(sortedNotes, sortedAttacks, maxDuration);
+        return new DegreeWheelIndex(sortedNotes, maxDuration);
     }
 
     /// <summary>
@@ -371,35 +300,6 @@ public sealed class DegreeWheelIndex
         }
 
         buffer[..count].Reverse();
-        return count;
-    }
-
-    /// <summary>
-    /// Fills <paramref name="buffer"/> with the most recent attacks at or before
-    /// <paramref name="tick"/> and no older than <paramref name="windowTicks"/>, most recent first,
-    /// and returns how many were written.
-    /// </summary>
-    public int Trail(long tick, long windowTicks, Span<WheelNote> buffer)
-    {
-        if (_attacks.Length == 0 || buffer.Length == 0 || windowTicks <= 0 || tick < 0)
-        {
-            return 0;
-        }
-
-        int upper = FirstStartingAfter(_attacks, tick);
-        long floor = tick - windowTicks;
-        int count = 0;
-
-        for (int i = upper - 1; i >= 0 && count < buffer.Length; i--)
-        {
-            if (_attacks[i].StartTicks <= floor)
-            {
-                break;
-            }
-
-            buffer[count++] = _attacks[i];
-        }
-
         return count;
     }
 

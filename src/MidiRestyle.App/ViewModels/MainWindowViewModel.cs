@@ -268,6 +268,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(WindowTitle))]
+    [NotifyPropertyChangedFor(nameof(HasBarPosition))]
+    [NotifyPropertyChangedFor(nameof(BarStartTicks))]
+    [NotifyPropertyChangedFor(nameof(BarPositionText))]
+    [NotifyPropertyChangedFor(nameof(PlaybackFraction))]
     private MetadataViewModel? _metadata;
 
     [ObservableProperty]
@@ -632,6 +636,72 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public bool CanPlay => AudioAvailable && Project is not null;
 
+    // ---- where we are in the piece --------------------------------------------------------------
+
+    /// <summary>
+    /// Where the barlines fall, in ticks, for the piano roll's ruler.
+    /// </summary>
+    /// <remarks>
+    /// Built from <see cref="MetadataViewModel.Measures"/> rather than independently, so the bar the
+    /// roll draws a line at, the bar the transport counts and the bar count in the file pane are one
+    /// and the same reading of the time-signature map.
+    /// </remarks>
+    public long[] BarStartTicks => Metadata is { } metadata
+        ? [.. metadata.Measures.Select(m => m.StartTicks)]
+        : [];
+
+    /// <summary>
+    /// Whether the transport readout has anything to say. False before a file is open, and false for
+    /// a SMPTE-timed file, which has no notated bar to count.
+    /// </summary>
+    public bool HasBarPosition => Metadata?.BarCount is > 0;
+
+    /// <summary>
+    /// The bar under the playhead and the bar count, as <c>bar 3 / 8</c>.
+    /// </summary>
+    /// <remarks>
+    /// Reads bar 1 at rest rather than bar 0 or a blank: before you press Play you are at the top of
+    /// the piece, and musicians count bars from one. The bars come from
+    /// <see cref="MetadataViewModel.Measures"/> rather than from the score, so the readout is right
+    /// from the moment the file opens - before any target scale has been chosen and while the
+    /// original side is what is sounding.
+    /// </remarks>
+    public string BarPositionText
+    {
+        get
+        {
+            if (Metadata is not { } metadata || metadata.Measures.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            long ticks = (long)Math.Round(Math.Max(0, PlayheadTicks));
+            int bar = MeasureGrid.MeasureAt(metadata.Measures, ticks).Number;
+            return $"bar {bar} / {metadata.Measures.Count}";
+        }
+    }
+
+    /// <summary>
+    /// How far through the piece the playhead is, 0 to 1, for the transport's progress bar.
+    /// </summary>
+    /// <remarks>
+    /// Measured in ticks rather than seconds so it agrees with the bar readout beside it under a
+    /// tempo change - a rallentando would otherwise leave the bar number and the bar running at
+    /// visibly different speeds.
+    /// </remarks>
+    public double PlaybackFraction
+    {
+        get
+        {
+            if (Project is not { } project || project.DurationTicks <= 0 || PlayheadTicks < 0)
+            {
+                return 0;
+            }
+
+            return Math.Clamp(PlayheadTicks / project.DurationTicks, 0, 1);
+        }
+    }
+
     /// <summary>
     /// Whether Stop would do anything. False when nothing is sounding and the playhead is at the start.
     /// </summary>
@@ -933,7 +1003,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(CanStop));
     }
 
-    partial void OnPlayheadTicksChanged(double value) => OnPropertyChanged(nameof(CanStop));
+    partial void OnPlayheadTicksChanged(double value)
+    {
+        OnPropertyChanged(nameof(CanStop));
+        OnPropertyChanged(nameof(BarPositionText));
+        OnPropertyChanged(nameof(PlaybackFraction));
+    }
 
     partial void OnHearingRestyledChanged(bool value) => OnPropertyChanged(nameof(AbLabel));
 

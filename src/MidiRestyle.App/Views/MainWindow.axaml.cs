@@ -10,6 +10,7 @@ using MidiRestyle.Core.Analysis;
 using MidiRestyle.Core.Scales;
 using MidiRestyle.Core.Io;
 using MidiRestyle.Core.Notation;
+using MidiRestyle.App.Controls;
 using MidiRestyle.App.Services;
 using MidiRestyle.Playback;
 using System.Diagnostics;
@@ -158,6 +159,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        // The lit keys must show what is sounding, not what is drawn solid, so they follow the A/B
+        // toggle rather than the layer.
+        if (e.PropertyName == nameof(MainWindowViewModel.HearingRestyled))
+        {
+            PianoRollView.HighlightRestyled = _viewModel.HearingRestyled;
+            return;
+        }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.Metadata))
+        {
+            PianoRollView.SetBars(_viewModel.BarStartTicks);
+            return;
+        }
+
         if (e.PropertyName != nameof(MainWindowViewModel.SourceRollNotes))
         {
             return;
@@ -294,7 +309,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        double ticks = PianoRollView.ScrollTicks + (released.X / PianoRollView.PixelsPerTick);
+        // The keyboard column is not part of the timeline, so a click on it is not a seek - and a
+        // click just right of it is tick zero, not GutterWidth pixels' worth of ticks into the piece.
+        if (released.X < PianoRoll.GutterWidth || released.Y < PianoRoll.RulerHeight)
+        {
+            return;
+        }
+
+        double ticks = PianoRollView.ScrollTicks
+            + ((released.X - PianoRoll.GutterWidth) / PianoRollView.PixelsPerTick);
         _viewModel.SeekToTicks(ticks);
         PianoRollView.PlayheadTicks = _viewModel.PlayheadTicks;
         SyncScrollBars();

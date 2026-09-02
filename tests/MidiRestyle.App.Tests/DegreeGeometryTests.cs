@@ -142,54 +142,40 @@ public class DegreeGeometryTests
     }
 
     [Fact]
-    public void ADegreesDeviationWhiskerRunsBackToItsNearestSemitone()
+    public void ADegreesDeviationArcRunsBackToItsNearestSemitone()
     {
         DegreeGeometry.NearestTwelveTetCents(350).Should().Be(400, "ties round away from zero");
         DegreeGeometry.NearestTwelveTetCents(240).Should().Be(200);
         DegreeGeometry.NearestTwelveTetCents(700).Should().Be(700);
     }
 
-    // --- octave to radius --------------------------------------------------------------------------
+    // --- the twelve reference names ----------------------------------------------------------------
 
     [Fact]
-    public void TheTonicsOwnOctaveSitsOnTheBaseRadius() =>
-        DegreeGeometry.RadiusForOctave(0, 50, 10).Should().Be(50);
-
-    [Fact]
-    public void RadiusIncreasesWithOctave()
+    public void TwelveOClockIsTheTonicsOwnName()
     {
-        double[] radii =
-        [
-            DegreeGeometry.RadiusForOctave(-2, 50, 10),
-            DegreeGeometry.RadiusForOctave(-1, 50, 10),
-            DegreeGeometry.RadiusForOctave(0, 50, 10),
-            DegreeGeometry.RadiusForOctave(1, 50, 10),
-            DegreeGeometry.RadiusForOctave(2, 50, 10),
-        ];
-
-        radii.Should().Equal([30, 40, 50, 60, 70], "inner rings are lower octaves, outer higher");
-        radii.Should().BeInAscendingOrder();
+        DegreeGeometry.NameAtTick(0, 0).Should().Be("C");
+        DegreeGeometry.NameAtTick(7, 0).Should().Be("G", "the wheel is drawn from the tonic, not from C");
     }
 
     [Fact]
-    public void ABassNoteAndAMelodyNoteOnTheSameDegreeDoNotCollide()
+    public void TheNamesRunClockwiseBySemitoneFromTheTonic()
     {
-        WheelPoint bass = DegreeGeometry.PointAtCents(
-            Layout, 700, DegreeGeometry.RadiusForOctave(Layout, -1));
-        WheelPoint melody = DegreeGeometry.PointAtCents(
-            Layout, 700, DegreeGeometry.RadiusForOctave(Layout, 1));
+        string[] fromD =
+            [.. Enumerable.Range(0, 12).Select(i => DegreeGeometry.NameAtTick(2, i))];
 
-        bass.Should().NotBe(melody);
+        fromD.Should().Equal(
+            ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#"],
+            "the names wrap past B back to C rather than running off the end");
     }
 
     [Fact]
-    public void ExtremeOctavesSaturateRatherThanRunningOffTheControl()
+    public void TheNamesWrapRatherThanIndexingNegatively()
     {
-        DegreeGeometry.RadiusForOctave(5, 50, 10)
-            .Should().Be(DegreeGeometry.RadiusForOctave(DegreeGeometry.MaxOctaveRings, 50, 10));
-
-        DegreeGeometry.RadiusForOctave(-5, 50, 10)
-            .Should().Be(DegreeGeometry.RadiusForOctave(-DegreeGeometry.MaxOctaveRings, 50, 10));
+        // A tonic pitch class plus a tick index runs past eleven on every tonic but C, and C#'s
+        // remainder operator keeps the sign - so a naive modulo indexes backwards off the array.
+        DegreeGeometry.NameAtTick(11, 1).Should().Be("C");
+        DegreeGeometry.NameAtTick(11, 13).Should().Be("C");
     }
 
     // --- layout ---------------------------------------------------------------------------------
@@ -239,12 +225,11 @@ public class DegreeGeometryTests
     {
         WheelLayout layout = new(0, 0, 200);
 
-        layout.RingRadius.Should().Be(200 * DegreeGeometry.RingRadiusFraction);
-        layout.LabelRadius.Should().Be(200 * DegreeGeometry.LabelRadiusFraction);
-        layout.TrailRadius.Should().Be(200 * DegreeGeometry.TrailRadiusFraction);
-        layout.OctaveBaseRadius.Should().Be(200 * DegreeGeometry.OctaveBaseFraction);
-        layout.OctaveSpacing.Should().Be(200 * DegreeGeometry.OctaveSpacingFraction);
         layout.HubRadius.Should().Be(200 * DegreeGeometry.HubFraction);
+        layout.NumberRadius.Should().Be(200 * DegreeGeometry.NumberRadiusFraction);
+        layout.RingRadius.Should().Be(200 * DegreeGeometry.RingRadiusFraction);
+        layout.LetterRadius.Should().Be(200 * DegreeGeometry.LetterRadiusFraction);
+        layout.CentsRadius.Should().Be(200 * DegreeGeometry.CentsRadiusFraction);
     }
 
     [Fact]
@@ -266,11 +251,20 @@ public class DegreeGeometryTests
     {
         WheelLayout layout = new(0, 0, 200);
 
-        layout.HubRadius.Should().BeLessThan(DegreeGeometry.RadiusForOctave(layout, -DegreeGeometry.MaxOctaveRings));
-        DegreeGeometry.RadiusForOctave(layout, DegreeGeometry.MaxOctaveRings)
-            .Should().BeLessThan(layout.RingRadius);
-        layout.RingRadius.Should().BeLessThan(layout.LabelRadius);
-        layout.LabelRadius.Should().BeLessThan(layout.Radius);
+        // Everything on the wheel is placed on one of these, so the order is the drawing order from
+        // the middle out: the number rides its spoke inside the ring, the note names ring the
+        // outside of it, and the cents figures sit outside those without leaving the control.
+        double[] radii =
+        [
+            layout.HubRadius,
+            layout.NumberRadius,
+            layout.RingRadius,
+            layout.LetterRadius,
+            layout.CentsRadius,
+            layout.Radius,
+        ];
+
+        radii.Should().BeInAscendingOrder();
     }
 
     // --- which notes sound at a tick ----------------------------------------------------------------
@@ -380,7 +374,6 @@ public class DegreeGeometryTests
 
         WheelNote[] buffer = new WheelNote[4];
         DegreeWheelIndex.Empty.Sounding(0, buffer).Should().Be(0);
-        DegreeWheelIndex.Empty.Trail(0, 480, buffer).Should().Be(0);
     }
 
     [Fact]
@@ -412,86 +405,20 @@ public class DegreeGeometryTests
         buffer.Take(3).Select(n => n.StartTicks).Should().Equal([0L, 480L, 720L]);
     }
 
-    // --- the trail ------------------------------------------------------------------------------------
-
     [Fact]
-    public void TheTrailReturnsRecentAttacksNewestFirst()
+    public void ANoteHeldAcrossABarlineKeepsSoundingThroughIt()
     {
-        DegreeWheelIndex index = DegreeWheelIndex.Build(ScoreOf(
-            Note(0, 240, 60),
-            Note(240, 240, 62),
-            Note(480, 240, 64),
-            Note(720, 240, 65)));
-
-        WheelNote[] buffer = new WheelNote[4];
-        int count = index.Trail(800, windowTicks: 960, buffer);
-
-        count.Should().Be(4);
-        buffer.Take(4).Select(n => n.StartTicks).Should().Equal([720L, 480L, 240L, 0L]);
-    }
-
-    [Fact]
-    public void TheTrailForgetsAnythingOlderThanItsWindow()
-    {
-        DegreeWheelIndex index = DegreeWheelIndex.Build(ScoreOf(
-            Note(0, 240, 60),
-            Note(960, 240, 62)));
-
-        WheelNote[] buffer = new WheelNote[4];
-
-        index.Trail(1000, windowTicks: 480, buffer).Should().Be(1, "the first note is long past");
-    }
-
-    [Fact]
-    public void TheTrailDoesNotRetriggerOnATiedContinuation()
-    {
-        // A note held across a barline is one attack, not two. Counting the continuation would draw
-        // a melodic move that never happened.
+        // The builder splits a held note at the barline into a tie pair. Both halves are sounding
+        // spans, so the wheel keeps the degree lit right through the join rather than blinking at it.
         DegreeWheelIndex index = DegreeWheelIndex.Build(ScoreOf(
             Note(0, 480, 60, TieState.Start),
             Note(480, 480, 60, TieState.Stop)));
 
         WheelNote[] buffer = new WheelNote[4];
 
-        index.AttackCount.Should().Be(1);
-        index.Trail(600, windowTicks: 1920, buffer).Should().Be(1);
-        index.Sounding(600, buffer).Should().Be(1, "it is still sounding, even though it did not re-attack");
-    }
-
-    [Fact]
-    public void TrailStrengthDecaysWithAge()
-    {
-        DegreeGeometry.TrailStrength(100, 100, 400).Should().Be(1.0, "a note just struck is at full strength");
-        DegreeGeometry.TrailStrength(100, 200, 400).Should().BeApproximately(0.75, 1e-9);
-        DegreeGeometry.TrailStrength(100, 300, 400).Should().BeApproximately(0.5, 1e-9);
-        DegreeGeometry.TrailStrength(100, 500, 400).Should().Be(0, "a note a whole window old has faded out");
-    }
-
-    [Fact]
-    public void TrailStrengthIsOrderedNewestStrongest()
-    {
-        double[] strengths =
-        [
-            DegreeGeometry.TrailStrength(900, 1000, 480),
-            DegreeGeometry.TrailStrength(700, 1000, 480),
-            DegreeGeometry.TrailStrength(600, 1000, 480),
-        ];
-
-        strengths.Should().BeInDescendingOrder();
-        strengths.Should().AllSatisfy(s => s.Should().BeInRange(0, 1));
-    }
-
-    [Fact]
-    public void AFutureAttackHasNoStrengthAtAll() =>
-        DegreeGeometry.TrailStrength(1200, 1000, 480).Should().Be(0);
-
-    [Fact]
-    public void TrailStepsRunFromWeakestToStrongestAndStayInRange()
-    {
-        DegreeGeometry.TrailStep(0.0, 5).Should().Be(0);
-        DegreeGeometry.TrailStep(0.5, 5).Should().Be(2);
-        DegreeGeometry.TrailStep(1.0, 5).Should().Be(4, "a full-strength note must not index past the ladder");
-        DegreeGeometry.TrailStep(-0.3, 5).Should().Be(0);
-        DegreeGeometry.TrailStep(0.4, 0).Should().Be(0);
+        index.Sounding(479, buffer).Should().Be(1);
+        index.Sounding(480, buffer).Should().Be(1, "the continuation picks up exactly where the start ends");
+        index.Sounding(959, buffer).Should().Be(1);
+        index.Sounding(960, buffer).Should().Be(0);
     }
 }

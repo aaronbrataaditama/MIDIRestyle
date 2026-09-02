@@ -354,6 +354,30 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
   degree count and microtonality both vary freely. Its header elides with an ellipsis rather than
   clipping: real tuning names run to `Slendro (Kyahi Kanyut Mesem, Mangkunegaran, Surakarta)`, and
   the fit is cached on `(scale, width)` so an ordinary playhead frame costs nothing.
+- **The wheel's furniture never moves; playback only recolours it.** Every degree keeps a spoke, a
+  number, a marker and a cents reading at all times, and a sounding degree is shown by recolouring
+  those rather than by adding anything. The v1.2 wheel drew a bare ring at rest and grew spokes,
+  haloes, octave rings and a fading trail as notes arrived, and the user's verdict on it was that it
+  was confusing — the standing information and the momentary information looked alike, and there was
+  no still frame to learn the control from. The cost is deliberate: **the wheel no longer encodes
+  octave**, so a bass note and a melody note on the same degree light the same marker. That
+  distinction was the biggest single source of the clutter, it put dots across the middle of the
+  wheel where the eye had no reason to associate them with the rim, and the piano roll shows octave
+  far better than a ring ever did. The trail went with it — the standing spokes already keep the
+  wheel from being blank between attacks, which was the trail's own justification.
+- **The wheel's twelve reference ticks carry note names, and they are always sharp-spelled.** Twelve
+  o'clock is the *tonic*, not C, so the names run from the tonic's own pitch class — which needs
+  positive modulo, since a tonic pitch class plus a tick index runs past B on every tonic but C.
+  Sharps throughout: these name the equal-tempered grid the scale is read against, not the scale's
+  own degrees, and those carry their own spelling in `Scale.Spelling`. A reference grid that
+  respelled itself per scale would be a second, disagreeing opinion about the same twelve pitches.
+- **A degree's cents label is its offset, not its absolute cents.** Absolute cents restate the
+  marker's own position, which the wheel already shows. The offset is the number the reader cannot
+  see — and it is exactly what pitch bend has to carry, so it is the figure the channel budget is
+  spent on. Same reason the right rail's card reads `Deviation ±50¢ · 2 bend clusters at 5¢` rather
+  than naming a fidelity grade: `Exact / Close / Approximate` grade a scale against a standard the
+  user never chose and cannot act on, and "Approximate" reads as a fault in Maqam Saba rather than
+  as a fact about twelve equal semitones. `FidelityReport` still owns the *warning* rule.
 - **`Scale.Notatable` gates the staff; `DiatonicSpeller` decides it.** The flag alone is not the
   whole answer: a scale may be flagged notatable and still have no seven-letter spelling, because
   several dastgāhs and makams run to eight or nine degrees. Ask the speller, not the flag. The staff
@@ -453,6 +477,23 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
 - The piano roll is a custom `Control` overriding `Render(DrawingContext)`, **not** a panel of
   per-note elements. Cull to the visible tick/pitch range and avoid per-frame allocation; a dense
   file is tens of thousands of notes.
+- **The roll's keyboard and bar ruler are furniture, and every horizontal or vertical question is
+  asked of the grid, not the control.** `RollViewport` carries `GutterWidth` and `RulerHeight`, and
+  `EndTicks` / `BottomCents` measure `NoteAreaWidth` / `NoteAreaHeight`. Measure the whole control
+  instead and the scrollbar claims more music on screen than there is, leaving the last bar
+  permanently just past the right edge with the thumb already at its end — and click-to-seek must
+  subtract the gutter too, or a click just right of the keyboard seeks a gutter's worth of ticks
+  into the piece. The keyboard's rows are all the same height, because a row here is a grid row and
+  the notes beside it have to line up; a real keyboard's uneven naturals would put the two out of
+  register, which is why every piano-roll editor does the same. Lit keys follow the **A/B toggle**,
+  not the solid layer — lighting the restyled keys while the original is sounding is the quiet lie
+  the A/B switch exists to prevent.
+- **Bar spacing is averaged over the piece, and a label that would collide is skipped anyway.**
+  Measuring the first gap is wrong on real files: a pickup bar is routinely a fraction of the bars
+  after it — one test file opens with a single 1/8 bar and continues in 4/4 — so the first gap is
+  eight times too small and sparsifies the whole ruler. The interval snaps to 1/2/4/8… because
+  musicians count bars in fours, and a greedy "not within 30px of the last one printed" pass on top
+  keeps it legible where the metre genuinely changes.
 - DryWetMIDI raises playback events on a background thread. Marshal playhead updates with
   `Dispatcher.UIThread.Post` on a ~60 Hz timer — never per MIDI event.
 - **The third-party notices are embedded in the exe, and the publish gate is why.** The

@@ -52,6 +52,64 @@ next session time. Keep "Next action" accurate to the single next thing to do.
 
 ---
 
+## v1.5 — the UI pass (complete, **uncommitted**, branch `ui-enhancements`)
+
+Three changes the user asked for after taking the app's UI to Claude Design. Everything below is
+built, tested and green — `dotnet build` 0 warnings, `dotnet test` 1356 passing — but **nothing is
+committed**: the user asked for a branch without a commit. `git status` shows the working set.
+
+### 1. Bars in the file pane
+
+`MetadataViewModel.DurationText` now reads `0:14.4 · 8 bars` — tenths of a second, and the bar
+count beside it. `MetadataViewModel.Measures` is the one reading of the time-signature map, built
+once and lazily; the transport readout and the roll's ruler both take it from there rather than
+computing their own, for the same reason `MeasureGrid` exists at all. A SMPTE file gets neither
+figure rather than an invented one.
+
+### 2. The piano roll
+
+- A **keyboard gutter** down the left (`PianoRoll.GutterWidth`, 46px) and a **bar ruler** across
+  the top (`RulerHeight`, 19px). Both are carried in `RollViewport` so the culling and the
+  scrollbar extents measure the grid rather than the control — see the new CLAUDE.md bullet.
+- **Sounding keys light up**, from whichever layer the A/B toggle says is audible
+  (`PianoRoll.HighlightRestyled`, pushed from `HearingRestyled`). A fixed `bool[128]` cleared per
+  frame, so the render path still allocates nothing.
+- **Barlines and numbers.** `SetBars(long[])` takes the same measure starts the file pane counts.
+  Numbers thin to a 1/2/4/8 interval and are additionally skipped if they would land within 30px of
+  the last one printed — needed because a pickup bar makes the naive first-gap estimate wrong.
+- The scale rows' chip now reads **`12-TET`** or **`±50¢`** instead of Exact/Close/Approximate, in
+  theme-aware green or amber. `FidelityLabel` is untouched and still drives the *warning*.
+- **Bar readout in the toolbar**: `bar 3 / 8` plus a determinate progress bar, top right.
+- **A degree ladder** under the scale list (`DegreeLadder`, a new control) with
+  `Deviation ±50¢ · 2 bend clusters at 5¢` beneath it, replacing the fidelity badge's calm case.
+
+### 3. The degree wheel, rebuilt
+
+Matched to the animation the user supplied. Centred header naming tradition and region; the twelve
+reference ticks now carry **note names** read from the tonic; a **spoke, number, marker and cents
+reading for every degree at all times**; the deviation drawn as an **arc along the ring** rather
+than a chord; the tonic printed in the middle on a hub disc the spokes stop at; a sounding degree
+shown by **recolouring** its spoke, marker and number.
+
+**Removed, deliberately, and the user has been told:** the octave-radius plotting and the fading
+trail. Both are gone from `DegreeGeometry` and `DegreeWheelIndex` along with their tests
+(`RadiusForOctave`, `MaxOctaveRings`, `TrailStrength`, `TrailStep`, `DegreeWheelIndex.Trail`). The
+reasoning is in CLAUDE.md; the short version is that the wheel no longer distinguishes a bass note
+from a melody note on the same degree, and the piano roll does that better anyway. If it is wanted
+back, `git log` on this branch is the place to start.
+
+### How this was verified
+
+No manual pass was possible from the terminal, so the controls were rendered headlessly through
+`AvaloniaRenderFixture` — including the whole `MainWindow` with a real file loaded, in both theme
+variants — and the PNGs read back. That harness was **deleted** before finishing; if you need it
+again, it is a class that calls `AvaloniaRenderFixture.Run`, builds the control *inside* the
+callback (Avalonia objects bind to the first thread that touches them), and saves with
+`bitmap.Save(path, new PngBitmapEncoderOptions())`. `window.CaptureRenderedFrame()` is on
+`Avalonia.Headless.HeadlessWindowExtensions`, not on `Window`.
+
+---
+
 ## Third-party notices (complete, 2026-09-01)
 
 The single-file `.exe` redistributes its dependencies and the .NET runtime and shipped none of

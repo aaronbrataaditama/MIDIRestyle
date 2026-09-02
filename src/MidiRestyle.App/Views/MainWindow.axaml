@@ -15,6 +15,26 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://MIDIRestyle/Views/Icons.axaml" />
       </ResourceDictionary.MergedDictionaries>
+
+      <!--
+        The tuning chip's two states. Theme dictionaries rather than one fixed pair of colours: the
+        green that reads as calm on the dark ground is a pale wash on the light one, and the amber
+        that reads on white disappears into it. Both are stated for both themes rather than derived.
+      -->
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="ChipOnGridBackground" Color="#2233C06A" />
+          <SolidColorBrush x:Key="ChipOnGridForeground" Color="#5FD494" />
+          <SolidColorBrush x:Key="ChipBendBackground" Color="#22E0A850" />
+          <SolidColorBrush x:Key="ChipBendForeground" Color="#E8B463" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="ChipOnGridBackground" Color="#1E1E8E4A" />
+          <SolidColorBrush x:Key="ChipOnGridForeground" Color="#1B6E3C" />
+          <SolidColorBrush x:Key="ChipBendBackground" Color="#1EA06610" />
+          <SolidColorBrush x:Key="ChipBendForeground" Color="#8A5709" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
   </Window.Resources>
 
@@ -129,6 +149,7 @@
     <!-- Toolbar -->
     <Border DockPanel.Dock="Top" Padding="8,6" BorderThickness="0,0,0,1"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Grid ColumnDefinitions="Auto,*,Auto">
       <StackPanel Orientation="Horizontal" Spacing="6">
         <Button Command="{Binding OpenCommand}" ToolTip.Tip="Open a MIDI file">
           <StackPanel Orientation="Horizontal" Spacing="6">
@@ -180,6 +201,26 @@
           </StackPanel>
         </ToggleButton>
       </StackPanel>
+
+      <!--
+        Where you are in the piece, in the unit the music is written in. It lives up here beside the
+        transport rather than in the status bar because it changes sixty times a second while
+        everything in the status bar is standing information - and because it is the readout you
+        look at while your hand is still on Play.
+
+        A determinate bar, unlike the indeterminate one the exporter shows: the length of a MIDI file
+        is known exactly, so a real proportion is available and a barber's pole would be a worse
+        answer than the truth.
+      -->
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                  VerticalAlignment="Center" Margin="12,0,2,0"
+                  IsVisible="{Binding HasBarPosition}">
+        <TextBlock Text="{Binding BarPositionText}" FontSize="12" Opacity="0.75"
+                   VerticalAlignment="Center" />
+        <ProgressBar Minimum="0" Maximum="1" Value="{Binding PlaybackFraction}"
+                     Width="140" Height="4" VerticalAlignment="Center" />
+      </StackPanel>
+      </Grid>
     </Border>
 
     <!-- Status bar. Everything the engine decides silently reports here. -->
@@ -480,21 +521,42 @@
         </StackPanel>
 
         <!--
-          The fidelity badge. Deviation is neutral information shown calmly at all times; it becomes
-          a warning only when 12-TET output cannot carry the scale. Inverted, it would cry wolf on
-          every maqam or go silent exactly when the user is short-changed.
+          The fidelity badge, restated as the two facts behind it. Deviation is neutral information
+          shown calmly at all times; it becomes a warning only when 12-TET output cannot carry the
+          scale. Inverted, it would cry wolf on every maqam or go silent exactly when the user is
+          short-changed - so the warning still asks FidelityReport, which owns that rule.
+
+          What changed is the calm case. "Approximate - up to 50 cents from 12-TET" named a grade and
+          then explained it; this names the deviation and what it costs, which is the pair the
+          channel budget is actually spent on.
         -->
-        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="8,6" CornerRadius="3"
+        <Border DockPanel.Dock="Bottom" Margin="0,6,0,0" Padding="8,6" CornerRadius="3"
                 Background="#22000000"
-                IsVisible="{Binding Fidelity, Converter={x:Static ObjectConverters.IsNotNull}}">
+                IsVisible="{Binding HasLadder}">
           <StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock FontWeight="SemiBold" FontSize="12" Text="{Binding FidelityLabel}" />
-              <TextBlock Classes="metaLabel" Text="{Binding FidelityDescription}" />
+              <TextBlock FontWeight="SemiBold" FontSize="12" Text="{Binding DeviationSummary}" />
+              <TextBlock Classes="metaLabel" VerticalAlignment="Center"
+                         Text="{Binding BendClusterSummary}" />
             </StackPanel>
             <TextBlock Foreground="Goldenrod" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                        Text="{Binding FidelityWarning}"
                        IsVisible="{Binding IsFidelityWarning}" />
+          </StackPanel>
+        </Border>
+
+        <!--
+          The ladder: one octave as a line, the twelve semitones ticked along it, and the scale's own
+          degrees standing where they really fall. It sits directly under the list because it answers
+          the question arrow-keying down the list keeps asking - what shape is this scale, and how
+          far off the grid is it - without a click and without leaving the rail.
+        -->
+        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="8,6" CornerRadius="3"
+                Background="#22000000"
+                IsVisible="{Binding HasLadder}">
+          <StackPanel>
+            <TextBlock Classes="metaLabel" Text="{Binding LadderCaption}" Margin="0,0,0,2" />
+            <controls:DegreeLadder Height="42" Scale="{Binding SelectedScale}" />
           </StackPanel>
         </Border>
 
@@ -512,8 +574,30 @@
                     <TextBlock Text="{Binding Text}" FontSize="13" TextWrapping="NoWrap" />
                     <TextBlock Classes="metaLabel" Text="{Binding Detail}" TextWrapping="NoWrap" />
                   </StackPanel>
-                  <TextBlock Grid.Column="1" Classes="metaLabel" VerticalAlignment="Center"
-                             Margin="6,0,0,0" Text="{Binding FidelityLabel}" />
+
+                  <!--
+                    The tuning chip, in place of Exact/Close/Approximate. Those graded a scale
+                    against a standard the user did not pick and cannot act on - "Approximate" reads
+                    as a fault in Maqam Saba rather than as a fact about twelve equal semitones. What
+                    a browser of this list wants is whether it will play back on a plain synth, and
+                    if not, by how much it will miss. Two borders rather than one styled by a
+                    converter: the states differ in colour as well as text, and the colour is the
+                    part read at a glance.
+                  -->
+                  <Border Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0"
+                          CornerRadius="3" Padding="5,1"
+                          Background="{DynamicResource ChipOnGridBackground}"
+                          IsVisible="{Binding IsTwelveTet}">
+                    <TextBlock Text="{Binding TuningLabel}" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ChipOnGridForeground}" />
+                  </Border>
+                  <Border Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0"
+                          CornerRadius="3" Padding="5,1"
+                          Background="{DynamicResource ChipBendBackground}"
+                          IsVisible="{Binding !IsTwelveTet}">
+                    <TextBlock Text="{Binding TuningLabel}" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ChipBendForeground}" />
+                  </Border>
                 </Grid>
               </Panel>
             </DataTemplate>
