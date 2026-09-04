@@ -652,7 +652,7 @@ public sealed partial class StylePanelViewModel : ObservableObject
     {
         DetectedKey = detection;
 
-        if (detection?.TopCandidate is not { } best)
+        if (RestyleDefaults.ChosenCandidate(detection) is not { } best)
         {
             return;
         }
