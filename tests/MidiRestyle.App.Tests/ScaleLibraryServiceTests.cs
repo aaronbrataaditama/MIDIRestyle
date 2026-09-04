@@ -1,5 +1,6 @@
 using MidiRestyle.App.Services;
 using MidiRestyle.Core.Scales;
+using EmbeddedScaleAsset = MidiRestyle.App.Services.EmbeddedScaleAsset;
 
 namespace MidiRestyle.App.Tests;
 
@@ -77,7 +78,7 @@ public sealed class ScaleLibraryServiceTests : IDisposable
                 $"Could not locate the repo root (MIDIRestyle.slnx) walking up from '{AppContext.BaseDirectory}'.");
         }
 
-        return Path.Combine(dir.FullName, "src", "MidiRestyle.App", "Assets", "scales");
+        return Path.Combine(dir.FullName, "src", "MidiRestyle.Core", "Scales", "Data");
     }
 
     private static string ScaleJson(string id, double[]? degreeCents = null, string name = "Test scale") =>

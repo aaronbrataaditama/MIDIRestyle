@@ -7,4 +7,11 @@
          and BannedSymbols.txt makes touching it a build error. -->
     <PackageReference Include="Melanchall.DryWetMidi" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The nine authored scale-library files. Embedded here, not as Avalonia assets, so a headless
+         process (the MCP server, the tests) reads the same bytes the GUI does with no UI runtime.
+         LogicalName is fixed so the loader can enumerate by a stable prefix. -->
+    <EmbeddedResource Include="Scales/Data/*.json"
+                      LogicalName="MidiRestyle.Core.Scales.Data.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>
