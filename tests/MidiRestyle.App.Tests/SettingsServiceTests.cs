@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MidiRestyle.App.Services;
+using MidiRestyle.Core.Scales;
 
 namespace MidiRestyle.App.Tests;
 

@@ -146,7 +146,7 @@ public sealed class ScaleLibraryService
 
     public ScaleLibraryService(PathProbe? pathProbe = null, IEmbeddedScaleSource? embeddedScaleSource = null)
     {
-        _pathProbe = pathProbe ?? new PathProbe();
+        _pathProbe = pathProbe ?? PathProbe.Default();
         _embeddedScaleSource = embeddedScaleSource ?? new AvaloniaEmbeddedScaleSource();
     }
 

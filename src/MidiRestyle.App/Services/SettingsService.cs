@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MidiRestyle.Core.Scales;
 
 namespace MidiRestyle.App.Services;
 
@@ -41,7 +42,7 @@ public sealed class SettingsService
 
     public SettingsService(PathProbe? pathProbe = null)
     {
-        _pathProbe = pathProbe ?? new PathProbe();
+        _pathProbe = pathProbe ?? PathProbe.Default();
     }
 
     public SettingsLoadResult Load()

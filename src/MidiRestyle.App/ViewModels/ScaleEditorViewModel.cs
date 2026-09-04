@@ -285,7 +285,7 @@ public sealed partial class ScaleEditorViewModel : ObservableObject
 
     public ScaleEditorViewModel(PathProbe? pathProbe = null)
     {
-        _pathProbe = pathProbe ?? new PathProbe();
+        _pathProbe = pathProbe ?? PathProbe.Default();
         Degrees.CollectionChanged += OnDegreesCollectionChanged;
         LoadForNew();
     }
