@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using MidiRestyle.App.ViewModels;
 using MidiRestyle.Core.Model;
+using MidiRestyle.Core.Restyle;
 using MidiRestyle.Core.Scales;
 using MidiRestyle.Core.Tuning;
 
@@ -55,7 +56,7 @@ public class NotationViewNotificationTests
             new[]
             {
                 new Scale(
-                    StylePanelViewModel.MajorSourceScaleId, "Ionian", "Western Church Modes",
+                    RestyleDefaults.MajorSourceScaleId, "Ionian", "Western Church Modes",
                     "Europe & Balkans", [0, 200, 400, 500, 700, 900, 1100], "Test fixture, 2026"),
                 new Scale(
                     "t.gong", "Gong", "Chinese Wusheng", "East Asia",

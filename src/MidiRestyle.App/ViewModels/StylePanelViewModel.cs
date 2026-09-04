@@ -6,6 +6,7 @@ using MidiRestyle.Core.Analysis;
 using MidiRestyle.Core.Mapping;
 using MidiRestyle.Core.Model;
 using MidiRestyle.Core.Output;
+using MidiRestyle.Core.Restyle;
 using MidiRestyle.Core.Scales;
 using MidiRestyle.Core.Tuning;
 
@@ -168,28 +169,6 @@ public sealed partial class StylePanelViewModel : ObservableObject
     /// keystroke spam has to be collapsed somewhere - here, once, rather than in each caller.
     /// </remarks>
     public static TimeSpan SelectionDebounce { get; } = TimeSpan.FromMilliseconds(150);
-
-    /// <summary>The tonic octave that puts pitch class 0 at middle C, MIDI 60.</summary>
-    public const int DefaultTonicOctave = 4;
-
-    /// <summary>Narrowest useful bend-grouping tolerance. Below this, rounding artefacts buy channels.</summary>
-    public const double MinToleranceCents = 0.5;
-
-    /// <summary>Widest tolerance the escalation ladder ever reaches - half a semitone.</summary>
-    public const double MaxToleranceCents = 50.0;
-
-    /// <summary>
-    /// The library id used to seed the source scale from a detected major key.
-    /// </summary>
-    /// <remarks>
-    /// Ionian and Aeolian rather than "major" and "minor" because that is what the library ships.
-    /// Probed by id and skipped when absent, so a trimmed or user-replaced library degrades to
-    /// "leave the user's choice alone" rather than throwing.
-    /// </remarks>
-    public const string MajorSourceScaleId = "europe.churchmodes.ionian";
-
-    /// <inheritdoc cref="MajorSourceScaleId"/>
-    public const string MinorSourceScaleId = "europe.churchmodes.aeolian";
 
     /// <summary>
     /// Exactly what the <c>Mapping &amp; policies</c> disclosure contains: the five set-once
@@ -499,7 +478,7 @@ public sealed partial class StylePanelViewModel : ObservableObject
 
     /// <summary>Which octave the tonic sits in. 4 puts pitch class 0 at middle C, MIDI 60.</summary>
     [ObservableProperty]
-    private int _targetTonicOctave = DefaultTonicOctave;
+    private int _targetTonicOctave = RestyleDefaults.TonicOctave;
 
     /// <summary>
     /// The letter and accidental the tonic is written as.
@@ -585,7 +564,7 @@ public sealed partial class StylePanelViewModel : ObservableObject
 
     /// <summary>Which octave the source tonic sits in.</summary>
     [ObservableProperty]
-    private int _sourceTonicOctave = DefaultTonicOctave;
+    private int _sourceTonicOctave = RestyleDefaults.TonicOctave;
 
     /// <summary>
     /// The tuning being mapped out of. A setting, not an assumption.
@@ -615,7 +594,7 @@ public sealed partial class StylePanelViewModel : ObservableObject
     /// something to spell against from the moment a file opens - showing nothing until a target
     /// scale is selected reads as a broken view, since the piano roll beside it is already full.
     /// </remarks>
-    public Scale? EffectiveSourceScale => SourceScale ?? _library.Find(MajorSourceScaleId);
+    public Scale? EffectiveSourceScale => SourceScale ?? _library.Find(RestyleDefaults.MajorSourceScaleId);
 
     /// <summary>The source tonic as a pitch.</summary>
     public Pitch SourceTonic => Pitch.FromMidi(Math.Clamp(
@@ -681,7 +660,7 @@ public sealed partial class StylePanelViewModel : ObservableObject
         SourceTonicPitchClass = best.PitchClass;
         TargetTonicPitchClass = best.PitchClass;
 
-        if (_library.Find(best.IsMinor ? MinorSourceScaleId : MajorSourceScaleId) is { } seeded)
+        if (_library.Find(RestyleDefaults.SourceScaleIdFor(best)) is { } seeded)
         {
             SourceScale = seeded;
         }
@@ -751,15 +730,15 @@ public sealed partial class StylePanelViewModel : ObservableObject
 
     partial void OnToleranceCentsChanged(double value) => RaiseFidelityDependents();
 
-    /// <summary>Widens the bend-grouping tolerance by one cent, up to <see cref="MaxToleranceCents"/>.</summary>
+    /// <summary>Widens the bend-grouping tolerance by one cent, up to <see cref="RestyleDefaults.MaxToleranceCents"/>.</summary>
     [RelayCommand]
     private void WidenTolerance() =>
-        ToleranceCents = Math.Min(MaxToleranceCents, Math.Round(ToleranceCents + 1.0, 2));
+        ToleranceCents = Math.Min(RestyleDefaults.MaxToleranceCents, Math.Round(ToleranceCents + 1.0, 2));
 
-    /// <summary>Narrows the bend-grouping tolerance by one cent, down to <see cref="MinToleranceCents"/>.</summary>
+    /// <summary>Narrows the bend-grouping tolerance by one cent, down to <see cref="RestyleDefaults.MinToleranceCents"/>.</summary>
     [RelayCommand]
     private void NarrowTolerance() =>
-        ToleranceCents = Math.Max(MinToleranceCents, Math.Round(ToleranceCents - 1.0, 2));
+        ToleranceCents = Math.Max(RestyleDefaults.MinToleranceCents, Math.Round(ToleranceCents - 1.0, 2));
 
     // ------------------------------------------------------------------ output
 
