@@ -40,9 +40,9 @@ public sealed record ScaleIdCollision(string Id, ScaleOrigin Winner, ScaleOrigin
 /// The merged scale library: everything the app can restyle into, from every source.
 /// </summary>
 /// <remarks>
-/// Deliberately does no file IO. It is handed already-loaded scale sets, which keeps it pure,
-/// trivially testable, and free of any opinion about where files live - that belongs to the app's
-/// <c>ScaleLibraryService</c>, which knows about the portable-vs-AppData fallback.
+/// File IO and the portable-vs-AppData fallback belong to <see cref="ScaleLibraryLoader"/>, which
+/// assembles this from every source. This type is deliberately handed already-loaded scale sets,
+/// which keeps it pure, trivially testable, and free of any opinion about where files live.
 /// </remarks>
 public sealed class ScaleLibrary
 {

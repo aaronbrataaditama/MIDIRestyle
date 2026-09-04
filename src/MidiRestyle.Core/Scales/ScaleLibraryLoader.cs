@@ -1,84 +1,4 @@
-using System.Text;
-using Avalonia.Platform;
-using MidiRestyle.Core.Scales;
-
-namespace MidiRestyle.App.Services;
-
-/// <summary>One embedded scale-library JSON asset: its file name and raw content.</summary>
-public sealed record EmbeddedScaleAsset(string FileName, string Json);
-
-/// <summary>
-/// Reads the scale-library JSON assets embedded in the assembly. Behind an interface so
-/// <see cref="ScaleLibraryService"/> can be exercised without a live Avalonia platform - see
-/// <see cref="AvaloniaEmbeddedScaleSource"/>'s remarks for why that matters.
-/// </summary>
-public interface IEmbeddedScaleSource
-{
-    /// <summary>Every embedded scale-library JSON file, in no particular order.</summary>
-    IReadOnlyList<EmbeddedScaleAsset> ReadAll();
-}
-
-/// <summary>
-/// Reads the nine embedded scale-library JSON files via Avalonia's <c>avares://</c> asset loader.
-/// </summary>
-/// <remarks>
-/// <para>
-/// <b>Needs a live Avalonia platform, confirmed directly rather than assumed.</b> A throwaway
-/// console app referencing this assembly showed that calling <c>AssetLoader.GetAssets</c> or
-/// <c>AssetLoader.Open</c> before any <c>AppBuilder</c> has run throws
-/// <c>InvalidOperationException: Unable to locate 'Avalonia.Platform.IAssetLoader'</c> - there is no
-/// service registered to resolve it against yet. After
-/// <c>AppBuilder.Configure&lt;Application&gt;().UseHeadless(...).SetupWithoutStarting()</c>, the same
-/// calls succeed: enumeration finds all nine files under <c>avares://MIDIRestyle/Assets/scales/</c>
-/// and each opens and reads correctly. In the shipping app this is a non-issue - the platform is
-/// already initialised by the time <see cref="ScaleLibraryService"/> runs. A plain xunit process is
-/// not initialised that way, so <see cref="ScaleLibraryService"/> depends on
-/// <see cref="IEmbeddedScaleSource"/> rather than this type directly: the automated suite exercises
-/// the merge/precedence logic against a fake source (reading the same JSON straight off disk), and
-/// this class's own asset-loader behaviour was verified once, out of band, via that console app -
-/// it is not exercised by <c>dotnet test</c>.
-/// </para>
-/// <para>
-/// Enumerates the folder via <see cref="AssetLoader.GetAssets(Uri, Uri?)"/> rather than hard-coding
-/// the nine file names, so a tenth file needs no code change here. Falls back to the documented list
-/// below only if enumeration comes back empty - itself a signal something is unusual, but still
-/// recoverable as long as the fixed names resolve.
-/// </para>
-/// </remarks>
-public sealed class AvaloniaEmbeddedScaleSource : IEmbeddedScaleSource
-{
-    private static readonly Uri ScalesFolder = new("avares://MIDIRestyle/Assets/scales/");
-
-    /// <summary>
-    /// Used only when <see cref="AssetLoader.GetAssets(Uri, Uri?)"/> enumeration comes back empty.
-    /// Kept in sync with the nine files listed in the task brief.
-    /// </summary>
-    private static readonly string[] FallbackFileNames =
-    [
-        "africa.json", "americas.json", "east-asia.json", "europe.json", "middle-east.json",
-        "persian.json", "south-asia-thaats.json", "southeast-asia.json", "turkish-makam.json",
-    ];
-
-    public IReadOnlyList<EmbeddedScaleAsset> ReadAll()
-    {
-        List<Uri> uris = [.. AssetLoader.GetAssets(ScalesFolder, null)];
-        if (uris.Count == 0)
-        {
-            uris = [.. FallbackFileNames.Select(name => new Uri(ScalesFolder, name))];
-        }
-
-        var assets = new List<EmbeddedScaleAsset>(uris.Count);
-        foreach (Uri uri in uris)
-        {
-            using Stream stream = AssetLoader.Open(uri);
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-            string fileName = uri.Segments[^1];
-            assets.Add(new EmbeddedScaleAsset(fileName, reader.ReadToEnd()));
-        }
-
-        return assets;
-    }
-}
+namespace MidiRestyle.Core.Scales;
 
 /// <summary>
 /// The outcome of assembling the scale library: the merged library itself, plus everything the
@@ -112,7 +32,7 @@ public sealed record ScaleLibraryLoadResult(
 /// on, and after the first run it normally holds a copy of every embedded id. Feeding both an
 /// unfiltered "Embedded" tier and the "BesideExe" tier straight into <see cref="ScaleLibrary.Build"/>
 /// would report all 99 as id collisions on every single run, which is not a real conflict - it is
-/// this service's own materialisation, not two sources genuinely disagreeing. Filtering keeps
+/// this loader's own materialisation, not two sources genuinely disagreeing. Filtering keeps
 /// <see cref="ScaleLibrary.Collisions"/> meaningful: empty in the steady state, and non-empty only
 /// when something has actually changed underneath a shipped id (a user scale, or a hand-edited
 /// beside-exe file, claiming an id whose folder copy could not be parsed) or two independent sources
@@ -120,11 +40,12 @@ public sealed record ScaleLibraryLoadResult(
 /// still loads from the untouched in-memory embedded copy instead of vanishing.
 /// </para>
 /// <para>
-/// Directory resolution mirrors <see cref="SettingsService"/>: <see cref="PathProbe.ResolveWritableRoot"/>
-/// decides between beside-the-exe and <c>%APPDATA%\MIDIRestyle</c>, by attempting a real write, never
-/// by inspecting attributes. Both the <c>scales/</c> folder and <c>user.scales.json</c> are read from
-/// that resolved root, even when <see cref="WritableRootResult.IsWritable"/> is false - the location
-/// may be read-only rather than wholly inaccessible, and an existing file there should still load.
+/// Directory resolution uses <see cref="PathProbe.ResolveWritableRoot"/>, including the
+/// <c>MIDIRESTYLE_DATA_ROOT</c> override: it decides between beside-the-exe and
+/// <c>%APPDATA%\MIDIRestyle</c>, by attempting a real write, never by inspecting attributes. Both the
+/// <c>scales/</c> folder and <c>user.scales.json</c> are read from that resolved root, even when
+/// <see cref="WritableRootResult.IsWritable"/> is false - the location may be read-only rather than
+/// wholly inaccessible, and an existing file there should still load.
 /// </para>
 /// <para>
 /// Nothing here throws for bad data. A file that is not valid <c>midirestyle-scales-v1</c> JSON
@@ -133,7 +54,7 @@ public sealed record ScaleLibraryLoadResult(
 /// courtesy of <see cref="ScaleJsonStore"/>, which already draws this distinction.
 /// </para>
 /// </remarks>
-public sealed class ScaleLibraryService
+public sealed class ScaleLibraryLoader
 {
     /// <summary>Name of the writable, user-editable folder holding copies of the embedded scales.</summary>
     public const string ScalesFolderName = "scales";
@@ -142,12 +63,12 @@ public sealed class ScaleLibraryService
     public const string UserScalesFileName = "user.scales.json";
 
     private readonly PathProbe _pathProbe;
-    private readonly IEmbeddedScaleSource _embeddedScaleSource;
+    private readonly IReadOnlyList<EmbeddedScaleAsset>? _embeddedAssets;
 
-    public ScaleLibraryService(PathProbe? pathProbe = null, IEmbeddedScaleSource? embeddedScaleSource = null)
+    public ScaleLibraryLoader(PathProbe? pathProbe = null, IReadOnlyList<EmbeddedScaleAsset>? embeddedAssets = null)
     {
         _pathProbe = pathProbe ?? PathProbe.Default();
-        _embeddedScaleSource = embeddedScaleSource ?? new AvaloniaEmbeddedScaleSource();
+        _embeddedAssets = embeddedAssets;
     }
 
     /// <summary>
@@ -161,7 +82,7 @@ public sealed class ScaleLibraryService
 
         IReadOnlyList<Scale> generated = MelakartaGenerator.GenerateAll();
 
-        IReadOnlyList<EmbeddedScaleAsset> embeddedAssets = _embeddedScaleSource.ReadAll();
+        IReadOnlyList<EmbeddedScaleAsset> embeddedAssets = _embeddedAssets ?? EmbeddedScaleAssets.ReadAll();
         List<Scale> embeddedScales = LoadScales(
             embeddedAssets.Select(a => (Label: $"(embedded:{a.FileName})", Json: (string?)a.Json)),
             failures);
@@ -200,7 +121,10 @@ public sealed class ScaleLibraryService
     /// Copies every embedded asset into <paramref name="scalesDirectory"/> that is not already there -
     /// "first run" is defined by absence, not by any run counter, so a file the user has since edited
     /// is never touched again. No-op, with a stated reason appended, when the directory is not
-    /// writable at all.
+    /// writable at all. Each file is written beside its destination and moved into place, so two
+    /// processes racing to materialise the same first run see either no file or a complete one -
+    /// never a torn read - and a per-file IO failure is caught and skipped rather than aborting the
+    /// whole run.
     /// </summary>
     private static void MaterializeFirstRun(
         WritableRootResult resolved,
@@ -216,18 +140,52 @@ public sealed class ScaleLibraryService
         try
         {
             Directory.CreateDirectory(scalesDirectory);
-            foreach (EmbeddedScaleAsset asset in embeddedAssets)
-            {
-                string destination = Path.Combine(scalesDirectory, asset.FileName);
-                if (!File.Exists(destination))
-                {
-                    File.WriteAllText(destination, asset.Json);
-                }
-            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            reason += $" Could not populate '{scalesDirectory}': {ex.Message}";
+            reason += $" Could not create '{scalesDirectory}': {ex.Message}";
+            return;
+        }
+
+        foreach (EmbeddedScaleAsset asset in embeddedAssets)
+        {
+            string destination = Path.Combine(scalesDirectory, asset.FileName);
+            if (File.Exists(destination))
+            {
+                continue;
+            }
+
+            // Write beside the target and move into place, so a second process starting at the
+            // same moment sees either no file or a complete one - never a torn read.
+            string temp = destination + ".tmp-" + Guid.NewGuid().ToString("N");
+            try
+            {
+                File.WriteAllText(temp, asset.Json);
+                File.Move(temp, destination, overwrite: false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (!File.Exists(destination))
+                {
+                    reason += $" Could not write '{destination}': {ex.Message}";
+                }
+            }
+            finally
+            {
+                TryDelete(temp);
+            }
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort; a stray temp file is harmless and is never read (it does not end in .json).
         }
     }
 

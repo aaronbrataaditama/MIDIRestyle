@@ -226,8 +226,8 @@ public sealed record ScaleEditorSaveResult(bool Success, Scale? Scale, string Re
 /// this type only ever needs to pass <see cref="Notatable"/> through.
 /// </para>
 /// <para>
-/// <b>Persistence reuses <see cref="ScaleLibraryService"/>'s own path resolution</b> -
-/// <see cref="PathProbe.ResolveWritableRoot"/> and <see cref="ScaleLibraryService.UserScalesFileName"/>
+/// <b>Persistence reuses <see cref="ScaleLibraryLoader"/>'s own path resolution</b> -
+/// <see cref="PathProbe.ResolveWritableRoot"/> and <see cref="ScaleLibraryLoader.UserScalesFileName"/>
 /// - rather than re-deriving where <c>user.scales.json</c> lives. An unwritable location (read-only
 /// media, a locked-down %APPDATA%) is an expected state, not a bug: <see cref="Save"/> and
 /// <see cref="Delete"/> both report it through <see cref="ScaleEditorSaveResult"/> and never throw for
@@ -666,7 +666,7 @@ public sealed partial class ScaleEditorViewModel : ObservableObject
             return new ScaleEditorSaveResult(false, null, resolved.Reason);
         }
 
-        string path = Path.Combine(resolved.Root, ScaleLibraryService.UserScalesFileName);
+        string path = Path.Combine(resolved.Root, ScaleLibraryLoader.UserScalesFileName);
 
         List<Scale> current;
         try
@@ -740,7 +740,7 @@ public sealed partial class ScaleEditorViewModel : ObservableObject
             return new ScaleEditorSaveResult(false, null, resolved.Reason);
         }
 
-        string path = Path.Combine(resolved.Root, ScaleLibraryService.UserScalesFileName);
+        string path = Path.Combine(resolved.Root, ScaleLibraryLoader.UserScalesFileName);
         if (!File.Exists(path))
         {
             return new ScaleEditorSaveResult(true, null, "There was nothing to delete.");
@@ -780,7 +780,7 @@ public sealed partial class ScaleEditorViewModel : ObservableObject
 
     /// <summary>
     /// Reads whatever is currently in <c>user.scales.json</c>. A file that fails to parse at all has
-    /// nothing worth preserving - the same tolerance <see cref="ScaleLibraryService"/> already applies
+    /// nothing worth preserving - the same tolerance <see cref="ScaleLibraryLoader"/> already applies
     /// to bad data elsewhere - so <see cref="Save"/> proceeds as if it were empty rather than blocking
     /// on it; only a genuine IO failure (caught by the caller) stops a save.
     /// </summary>
