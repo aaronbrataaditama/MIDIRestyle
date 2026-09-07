@@ -51,7 +51,7 @@ public static class ScaleDescriptors
         FidelityReport fidelity = TuningFidelity.Assess(scale);
         return new ScaleSummary(
             scale.Id, scale.Name, scale.Tradition, scale.Region, scale.DegreeCount,
-            IsNotatable(scale, out _), FitsTwelveTet(scale), Round(fidelity.MaxDeviationCents),
+            IsNotatable(scale, out _), FitsTwelveTet(scale), RoundOrNull(fidelity.MaxDeviationCents),
             EnumNames.Echo(fidelity.Badge), Third(scale));
     }
 
@@ -67,10 +67,17 @@ public static class ScaleDescriptors
             Summarise(scale, origin), scale.Description, scale.Source,
             [.. scale.DegreeCents.Select(Round)], [.. scale.DegreeOffsets.Select(Round)],
             spelling, reason,
-            new FidelityInfo(EnumNames.Echo(fidelity.Badge), Round(fidelity.MaxDeviationCents), fidelity.WorstDegreeIndex),
+            new FidelityInfo(EnumNames.Echo(fidelity.Badge), RoundOrNull(fidelity.MaxDeviationCents), fidelity.WorstDegreeIndex),
             OffsetClusterer.ClusterCount(scale, RestyleDefaults.ToleranceCents),
             origin is null ? "unknown" : EnumNames.Echo(origin.Value));
     }
 
     public static double Round(double cents) => Math.Round(cents, 2, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// <see cref="Round"/>, but null for a non-finite value. <see cref="FidelityBadge.Impossible"/>
+    /// reports <see cref="double.PositiveInfinity"/>, which <c>System.Text.Json</c> cannot serialise -
+    /// see <see cref="ScaleSummary"/>'s remarks.
+    /// </summary>
+    public static double? RoundOrNull(double cents) => double.IsFinite(cents) ? Round(cents) : null;
 }

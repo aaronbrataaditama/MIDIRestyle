@@ -13,6 +13,29 @@ internal static class TestLibrary
         appDataDirectory: Path.Combine(Root, "appdata"),
         overrideRoot: Path.Combine(Root, "data"));
 
+    static TestLibrary()
+    {
+        // The GUID in Root makes this safe under parallel test processes; ProcessExit is what keeps
+        // it from accumulating in %TEMP% run after run. Best-effort: a locked file (e.g. an
+        // antivirus scan mid-delete) must never fail the test run over cleanup.
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => TryDeleteRoot();
+    }
+
+    private static void TryDeleteRoot()
+    {
+        try
+        {
+            if (Directory.Exists(Root))
+            {
+                Directory.Delete(Root, recursive: true);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best-effort cleanup only; a leftover temp directory is harmless.
+        }
+    }
+
     private static readonly Lazy<ScaleLibrary> Instance = new(() => new ScaleLibraryLoader(Probe).Load().Library);
 
     public static ScaleLibrary Load() => Instance.Value;
