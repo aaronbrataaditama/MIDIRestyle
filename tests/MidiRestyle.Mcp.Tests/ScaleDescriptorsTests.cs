@@ -72,9 +72,16 @@ public class ScaleDescriptorsTests
 
         ScaleDetail detail = ScaleDescriptors.Describe(TestLibrary.Rast, ScaleOrigin.Embedded);
         detail.Summary.Should().Be(summary);
-        detail.Source.Should().NotBeNullOrWhiteSpace();
-        detail.DegreeCents.Should().HaveCount(7);
-        detail.DegreeOffsets.Should().OnlyContain(o => o == Math.Round(o, 2));
+        // Exact values, not shape-only checks: for Rast, DegreeCents and DegreeOffsets are both
+        // seven already-round doubles, and Source/Description are both non-blank prose, so a
+        // count-only or non-blank-only assertion would not notice the two constructor arguments
+        // swapped in either pair.
+        detail.DegreeCents.Should().Equal([0, 200, 350, 500, 700, 900, 1050]);
+        detail.DegreeOffsets.Should().Equal([0, 0, -50, 0, 0, 0, -50]);
+        detail.Source.Should().StartWith("Notated form: C D E-half-flat F G A B-half-flat",
+            "Source is the tuning's citation, not its description");
+        detail.Description.Should().StartWith("The notated tuning, not a measurement.",
+            "Description is the scale's own prose note, not its Source citation");
         detail.NotatableReason.Should().BeNull();
         detail.Fidelity.Badge.Should().Be("approximate");
         detail.Fidelity.MaxDeviationCents.Should().Be(50);
@@ -101,5 +108,20 @@ public class ScaleDescriptorsTests
     public void DescribeReportsUnknownOriginWhenNoneIsSupplied()
     {
         ScaleDescriptors.Describe(TestLibrary.Ionian, null).Origin.Should().Be("unknown");
+    }
+
+    /// <summary>
+    /// States, rather than merely having once reported, that the nullable-cents guard on
+    /// <see cref="ScaleSummary.MaxDeviationCents"/>/<see cref="FidelityInfo.MaxDeviationCents"/> is
+    /// currently unexercised by the shipped catalog: nothing in it is tuned so tightly that 12-TET
+    /// cannot separate its degrees at all. The guard itself stays regardless - a future imported or
+    /// hand-authored scale can still reach <see cref="FidelityBadge.Impossible"/> - but a catalog
+    /// change that newly does so should fail this test rather than surface downstream unnoticed.
+    /// </summary>
+    [Fact]
+    public void NoShippedScaleReachesTheImpossibleBadge()
+    {
+        TestLibrary.Load().Scales
+            .Should().NotContain(s => TuningFidelity.Assess(s).Badge == FidelityBadge.Impossible);
     }
 }
