@@ -74,6 +74,35 @@ public sealed class OutputPathPolicyTests : IDisposable
     }
 
     [Fact]
+    public void SegmentBoundaryPreventsPrefixMatchOnASiblingFolder()
+    {
+        // _protected's DataRoot/BaseDirectory is _root/data - "data" must not be treated as
+        // containing "dataother", which a raw character-prefix comparison would get wrong.
+        string output = Path.Combine(_root, "dataother", "x.mid");
+        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected)
+            .Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("relative.mid")]
+    [InlineData(@"C:relative.mid")]
+    [InlineData(@"\rooted-but-driveless.mid")]
+    public void OutputMustBeFullyQualified(string path)
+    {
+        OutputPathPolicy.ValidateOutputPath(path, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected)
+            .Should().Contain("absolute");
+    }
+
+    [Fact]
+    public void MusicXmlExtensionAllowListAcceptsItsOwnExtensionsAndRejectsOthers()
+    {
+        string input = Path.Combine(_music, "in.mid");
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.musicxml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.xml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.mid"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().Contain(".musicxml");
+    }
+
+    [Fact]
     public void BaseDirectoryIsRefusedOnlyWhenItIsNotTheDataRoot()
     {
         var programFiles = _protected with { BaseDirectory = Path.Combine(_root, "program-files") };

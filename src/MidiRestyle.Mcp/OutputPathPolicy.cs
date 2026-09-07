@@ -15,14 +15,14 @@ public sealed record ProtectedLocations(string? ExePath, string DataRoot, string
 
     public bool Refuses(string fullPath, out string reason)
     {
-        string root = Full(DataRoot);
+        string root = OutputPathPolicy.Full(DataRoot);
         string[] protectedFiles =
         [
             Path.Combine(root, ScaleLibraryLoader.UserScalesFileName),
             Path.Combine(root, OutputPathPolicy.SettingsFileName),
         ];
 
-        if (ExePath is not null && Same(fullPath, Full(ExePath)))
+        if (ExePath is not null && Same(fullPath, OutputPathPolicy.Full(ExePath)))
         {
             reason = "refused: that is the running MIDIRestyle executable.";
             return true;
@@ -40,7 +40,7 @@ public sealed record ProtectedLocations(string? ExePath, string DataRoot, string
             return true;
         }
 
-        string baseDir = Full(BaseDirectory);
+        string baseDir = OutputPathPolicy.Full(BaseDirectory);
         if (!Same(baseDir, root) && IsUnder(fullPath, baseDir))
         {
             reason = "refused: the application's install folder is not a place for output files.";
@@ -51,17 +51,12 @@ public sealed record ProtectedLocations(string? ExePath, string DataRoot, string
         return false;
     }
 
-    /// <summary>
-    /// Canonical form for every path comparison here: resolve `..` and relative segments, normalise
-    /// slash direction, and drop a trailing separator, then compare case-insensitively (NTFS is
-    /// case-insensitive). Does NOT resolve 8.3 short names, symlinks/junctions, UNC-vs-mapped-drive
-    /// aliasing, or reconcile a `\\?\`-prefixed path against the same path without the prefix -
-    /// closing those needs a filesystem handle, not string canonicalisation, and is out of scope here.
-    /// </summary>
-    private static string Full(string p) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
-    private static bool Same(string a, string b) => string.Equals(Full(a), Full(b), StringComparison.OrdinalIgnoreCase);
+    private static bool Same(string a, string b) =>
+        string.Equals(OutputPathPolicy.Full(a), OutputPathPolicy.Full(b), StringComparison.OrdinalIgnoreCase);
+
     private static bool IsUnder(string path, string dir) =>
-        Full(path).StartsWith(Full(dir) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        OutputPathPolicy.Full(path)
+            .StartsWith(OutputPathPolicy.Full(dir) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -80,6 +75,28 @@ public static class OutputPathPolicy
 
     public static readonly IReadOnlySet<string> MusicXmlExtensions =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".musicxml", ".xml" };
+
+    /// <summary>
+    /// Canonical form for every path comparison in this file: resolve `..` and relative segments,
+    /// normalise slash direction, and drop a trailing separator, then compare case-insensitively
+    /// (NTFS is case-insensitive). Two categories of alias are NOT resolved here, and they are not
+    /// equally serious:
+    ///
+    /// - Symlinks/junctions and UNC-vs-mapped-drive aliasing require an adversary to have already
+    ///   set the alias up (create the junction, map the drive). By the time such an alias exists,
+    ///   whoever created it could have named the protected file directly, so leaving these unresolved
+    ///   grants no capability an ordinary fully-qualified path did not already have.
+    /// - 8.3 short names are a different case. Windows generates one automatically for every long or
+    ///   multi-dot filename (`MIDIRestyle.exe` -> roughly `MIDIRE~1.EXE`, `MIDIRestyle.settings.json`
+    ///   likewise) with no setup at all, so `MIDIRE~1.EXE` reaches a target that naming
+    ///   `MIDIRestyle.exe` directly is refused for. That is a real, unmitigated defeat of the one
+    ///   guard this type provides - not equivalent freedom, unlike the two cases above. It is
+    ///   accepted rather than closed because closing it needs a `GetLongPathName` P/Invoke (there is
+    ///   no managed API for it), and exploiting it requires the caller to already know the generated
+    ///   short-name string - a channel this server does not offer, since it never echoes directory
+    ///   listings or short names back to the agent.
+    /// </summary>
+    internal static string Full(string p) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
 
     public static string? ValidateInputPath(string path)
     {
@@ -105,7 +122,7 @@ public static class OutputPathPolicy
             return $"outputPath '{outputPath}' must be an absolute path.";
         }
 
-        string full = Path.GetFullPath(outputPath);
+        string full = Full(outputPath);
         if (!allowedExtensions.Contains(Path.GetExtension(full)))
         {
             return $"outputPath must end in {string.Join(" or ", allowedExtensions)}.";
@@ -116,7 +133,7 @@ public static class OutputPathPolicy
             return $"outputPath '{outputPath}' {reason}";
         }
 
-        if (string.Equals(full, Path.GetFullPath(inputPath), StringComparison.OrdinalIgnoreCase) && !overwrite)
+        if (string.Equals(full, Full(inputPath), StringComparison.OrdinalIgnoreCase) && !overwrite)
         {
             return "outputPath is the input file; pass overwrite=true to replace it in place.";
         }
