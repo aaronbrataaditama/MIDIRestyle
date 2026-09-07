@@ -53,7 +53,7 @@ public class AboutViewModelTests
     [Fact]
     public void VersionMatchesTheVersionTheProjectDeclares()
     {
-        // Pins the csproj <Version> to what the About box will actually print, so bumping one
+        // Pins the Directory.Build.props <Version> to what the About box will actually print, so bumping one
         // without the other cannot ship silently.
         AboutViewModel.DisplayVersion.Should().StartWith("1.5");
     }
