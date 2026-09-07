@@ -51,6 +51,13 @@ public sealed record ProtectedLocations(string? ExePath, string DataRoot, string
         return false;
     }
 
+    /// <summary>
+    /// Canonical form for every path comparison here: resolve `..` and relative segments, normalise
+    /// slash direction, and drop a trailing separator, then compare case-insensitively (NTFS is
+    /// case-insensitive). Does NOT resolve 8.3 short names, symlinks/junctions, UNC-vs-mapped-drive
+    /// aliasing, or reconcile a `\\?\`-prefixed path against the same path without the prefix -
+    /// closing those needs a filesystem handle, not string canonicalisation, and is out of scope here.
+    /// </summary>
     private static string Full(string p) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
     private static bool Same(string a, string b) => string.Equals(Full(a), Full(b), StringComparison.OrdinalIgnoreCase);
     private static bool IsUnder(string path, string dir) =>
