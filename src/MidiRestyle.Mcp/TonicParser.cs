@@ -18,6 +18,12 @@ public sealed record ParsedTonic(Pitch Pitch, TonicSpelling Spelling)
         get
         {
             string letter = DegreeSpelling.LetterNames[Spelling.Letter].ToString();
+
+            // TonicSpelling itself allows double accidentals (+-2), but neither factory below ever
+            // produces one - the note-name grammar accepts a single accidental character and
+            // FromPitchClass never needs more than one flat. A |Alter| == 2 spelling constructed some
+            // other way would silently print with no accidental at all; that is out of this type's
+            // scope to fix, since a caller reaching it did not come through TryParse/FromDetected.
             string accidental = Spelling.Alter switch { 1 => "#", -1 => "b", _ => "" };
 
             // Octave is a property of the letter, not of the sounding pitch: Cb4 sounds a semitone
@@ -47,7 +53,10 @@ public static partial class TonicParser
 
         if (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out int midi))
         {
-            if (midi is < Pitch.MinMidiNote or > Pitch.MaxMidiNote)
+            // NumberStyles.None disallows a leading sign, so midi is never negative here - "-1"
+            // fails this TryParse and falls through to the note-name grammar below, which also
+            // rejects it (a digit is not a letter). Only the upper bound is reachable.
+            if (midi > Pitch.MaxMidiNote)
             {
                 error = $"MIDI note '{text}' is outside 0..127.";
                 return false;

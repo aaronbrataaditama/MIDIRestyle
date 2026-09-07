@@ -14,6 +14,7 @@ public class TonicParserTests
     [InlineData("F♯3", 54, "F#3")]
     [InlineData("B3", 59, "B3")]
     [InlineData("Cb4", 59, "Cb4")]
+    [InlineData("B#3", 60, "B#3")]
     [InlineData("62", 62, "D4")]
     [InlineData("0", 0, "C-1")]
     [InlineData("127", 127, "G9")]
@@ -50,6 +51,18 @@ public class TonicParserTests
         flat.Spelling.Alter.Should().Be(-1);
         sharp.Spelling.Letter.Should().Be(0);  // C
         sharp.Spelling.Alter.Should().Be(1);
+
+        // Both enharmonic wraps, not just the descending one: Cb crosses down into B's octave and
+        // B# crosses up into C's, so the letter/alter must come from what was typed either way.
+        TonicParser.TryParse("Cb4", out var flatWrap, out _);
+        TonicParser.TryParse("B#3", out var sharpWrap, out _);
+
+        flatWrap!.Midi.Should().Be(59);
+        sharpWrap!.Midi.Should().Be(60);
+        flatWrap.Spelling.Letter.Should().Be(0);   // C
+        flatWrap.Spelling.Alter.Should().Be(-1);
+        sharpWrap.Spelling.Letter.Should().Be(6);  // B
+        sharpWrap.Spelling.Alter.Should().Be(1);
     }
 
     [Fact]
