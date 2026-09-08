@@ -2,8 +2,10 @@ using System.ComponentModel;
 using MidiRestyle.Core.Analysis;
 using MidiRestyle.Core.Io;
 using MidiRestyle.Core.Model;
+using MidiRestyle.Core.Output;
 using MidiRestyle.Core.Restyle;
 using MidiRestyle.Core.Scales;
+using MidiRestyle.Core.Tuning;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -15,19 +17,21 @@ namespace MidiRestyle.Mcp;
 /// </summary>
 /// <remarks>
 /// Everything an agent sends is untrusted input, so no path reaches the filesystem before
-/// <see cref="OutputPathPolicy.ValidateInputPath"/> has passed it, and every failure - a refused path,
-/// a missing file, a file that is not MIDI at all - leaves as a <see cref="ToolResults.Error"/> in our
-/// own words. Nothing throws out of a tool method: an unhandled exception would take down the JSON-RPC
-/// session for every later call, not just the one that caused it.
+/// <see cref="OutputPathPolicy.ValidateInputPath"/> has passed it, no output path is written before
+/// <see cref="OutputPathPolicy.ValidateOutputPath"/> has passed it - in that order, so a refused
+/// destination is never touched at all - and every failure, a refused path, a missing file, a file
+/// that is not MIDI at all, leaves as a <see cref="ToolResults.Error"/> in our own words. Nothing
+/// throws out of a tool method: an unhandled exception would take down the JSON-RPC session for every
+/// later call, not just the one that caused it.
 /// </remarks>
 [McpServerToolType]
 public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
 {
     // Both are per-process, immutable and shared by concurrent calls. inspect_midi needs neither -
-    // it reads a file and reports it - but the write tools that join this type next resolve an
-    // agent's request against the library and check every output path against these locations, and
-    // the resolution is deliberately built once rather than per call. The probe is read lazily
-    // because ResolveWritableRoot touches the filesystem, which server construction should not.
+    // it reads a file and reports it - but the write tools resolve an agent's request against the
+    // library and check every output path against these locations, and the resolution is deliberately
+    // built once rather than per call. The probe is read lazily because ResolveWritableRoot touches
+    // the filesystem, which server construction should not.
     private readonly RestyleRequestResolver _resolver = new(library);
     private readonly Lazy<ProtectedLocations> _protected = new(() => ProtectedLocations.FromProcess(probe));
 
@@ -61,6 +65,105 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
         }
 
         return ToolResults.Ok(Inspect(inputPath, project));
+    }
+
+    [McpServerTool(Name = "restyle_midi", ReadOnly = false, Idempotent = false, Destructive = true, OpenWorld = false)]
+    [Description("Re-map a MIDI file's pitches from its source scale into a target scale and write a new .mid. " +
+                 "Microtonal targets use pitch bend on extra channels, exactly as the desktop app exports. " +
+                 "Overwrites an existing output only when overwrite is true. Rhythm, articulation and drums are never changed. " +
+                 "Omitted tonic/source values are taken from key detection; the report's 'resolved' block says what was used.")]
+    public CallToolResult RestyleMidi(
+        [Description("Absolute path to the source .mid file.")] string inputPath,
+        [Description("Target scale id from list_scales.")] string targetScaleId,
+        [Description("Target tonic: note name with optional accidental and octave (D, Eb4, F#3) or MIDI number as a string. Default: detected key's tonic at octave 4.")] string? targetTonic = null,
+        [Description("Source scale id. Default: ionian or aeolian per the detected key. Unused under strategy nearestPitch.")] string? sourceScaleId = null,
+        [Description("Source tonic, same forms as targetTonic. Default: detected key's tonic.")] string? sourceTonic = null,
+        [Description("Track-channels to leave untouched, as {track, channel} pairs from inspect_midi. Drums (channel 9) are always left untouched.")] IReadOnlyList<TrackChannelRef>? exclude = null,
+        [Description("scaleDegree (default) maps degree to degree; nearestPitch snaps each note to the nearest target pitch.")] string? strategy = null,
+        [Description("What to do with notes outside the source scale: snapToNearestSourceDegree (default), passThrough, drop.")] string? nonScaleNotes = null,
+        [Description("When two notes map to one pitch: merge (default) or displaceOctave.")] string? collisions = null,
+        [Description("When a mapped note leaves MIDI range: shiftIntoRange (default), foldOctave, drop.")] string? range = null,
+        [Description("Pitch-bend clustering tolerance in cents, 0.5..50 (default 5). Raised automatically if the channel budget does not fit; the report says so.")] double? toleranceCents = null,
+        [Description("Absolute output path ending in .mid or .midi. Default: beside the input as <name>.<scaleId>.mid.")] string? outputPath = null,
+        [Description("Replace an existing output file (default false).")] bool overwrite = false)
+    {
+        var request = new RestyleRequest(inputPath, targetScaleId, targetTonic, sourceScaleId, sourceTonic, exclude,
+            strategy, nonScaleNotes, collisions, range, toleranceCents, outputPath, overwrite);
+
+        // The resolver reports every field problem in one message; it is passed through whole rather
+        // than truncated to the first, so a wrong request costs the agent one round trip, not four.
+        if (!_resolver.TryResolve(request, out Resolution? resolution, out string? error))
+        {
+            return ToolResults.Error(error);
+        }
+
+        string output = outputPath ?? OutputPathPolicy.DefaultOutputPath(inputPath, resolution.Resolved.TargetScaleId, ".mid");
+
+        // Order matters and is load-bearing: the path is judged before a single byte is written, so a
+        // refused destination is never touched at all - not even by the atomic write's temp file.
+        if (OutputPathPolicy.ValidateOutputPath(output, inputPath, overwrite, OutputPathPolicy.MidiExtensions, _protected.Value) is { } outputError)
+        {
+            return ToolResults.Error(outputError);
+        }
+
+        RestyleResult result;
+        ChannelAllocation allocation;
+        byte[] bytes;
+        try
+        {
+            result = RestyleEngine.Restyle(resolution.Project, resolution.Settings);
+
+            // The default ceiling, which is the one playback passes too: preview and file are the same
+            // plan by construction. A second ceiling here would be the divergence the design forbids.
+            allocation = ChannelAllocator.Allocate(result);
+
+            using var stream = new MemoryStream();
+            ExportResult export = MidiFileExporter.Export(result, stream, allocation);
+            if (!export.Success)
+            {
+                return ToolResults.Error($"Export refused ({EnumNames.Echo(export.Reason!.Value)}): {export.Message}");
+            }
+
+            bytes = stream.ToArray();
+        }
+        catch (Exception ex) when (ex is MidiFileExportException or InvalidOperationException or IOException or NotSupportedException)
+        {
+            // Refusals an agent's own data can cause - a microtonal target, a note out of range - come
+            // back as an ExportResult above, not from here. This is the backstop for the rest.
+            // Reachable: ChannelAllocator raises InvalidOperationException if the budget and the
+            // allocator ever disagree about how many channels were planned. Defensive:
+            // MidiFileExportException is declared across the exporter's surface but its
+            // stream-plus-allocation overload does not currently raise it, and a MemoryStream does not
+            // fail the way a file does. All four are here because a bug in our own pipeline must reach
+            // the agent as one failed call, not as a dropped JSON-RPC session.
+            return ToolResults.Error($"Export failed: {ex.Message}");
+        }
+
+        // Rendered in full before anything is written, so a failure mid-render cannot leave a partial
+        // file; WriteAtomically then makes the replacement itself all-or-nothing.
+        if (OutputPathPolicy.WriteAtomically(output, bytes, overwrite) is { } writeError)
+        {
+            return ToolResults.Error(writeError);
+        }
+
+        var warnings = new List<string>(resolution.Warnings);
+        if (allocation.Describe() is { } budget) { warnings.Add(budget); }
+        if (result.Tally.Describe() is { } tally) { warnings.Add(tally); }
+
+        FidelityReport fidelity = TuningFidelity.Assess(resolution.Settings.TargetScale);
+        return ToolResults.Ok(new RestyleReport(
+            output,
+            resolution.Resolved,
+            result.RestyledTracks.Sum(t => t.Notes.Count),
+            new TallyReport(result.Tally.DroppedOutOfRange, result.Tally.DroppedNotInScale, result.Tally.Merged, result.Tally.Displaced),
+            new ChannelReport(
+                allocation.ChannelCount,
+                ScaleDescriptors.Round(allocation.Budget.EffectiveToleranceCents),
+                allocation.Budget.ToleranceWasRaised,
+                ScaleDescriptors.Round(allocation.Budget.WorstErrorCents),
+                [.. allocation.Muted.Select(m => new MutedTrack(m.TrackIndex, m.Channel, m.NoteCount))]),
+            new FidelityInfo(EnumNames.Echo(fidelity.Badge), ScaleDescriptors.RoundOrNull(fidelity.MaxDeviationCents), fidelity.WorstDegreeIndex),
+            warnings));
     }
 
     private static MidiInspection Inspect(string path, MidiProject project)
