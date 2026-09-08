@@ -279,4 +279,26 @@ public sealed class ScaleLibraryLoaderTests : IDisposable
             .Should().ContainSingle(p => p.EndsWith("solo.json", StringComparison.Ordinal),
                 "no temp files may be left behind");
     }
+
+    /// <summary>
+    /// <see cref="EmbeddedScaleAssets.ReadAll"/> throws when a manifest resource is listed but will not
+    /// open, and <see cref="ScaleLibraryLoader.Load"/> is documented as never throwing - a contract the
+    /// MCP server's startup depends on. So the read is guarded: the library comes up without the
+    /// embedded tier, saying why, rather than the failure escaping.
+    /// </summary>
+    [Fact]
+    public void Load_reports_a_failure_and_still_returns_a_library_when_the_embedded_assets_cannot_be_read()
+    {
+        var loader = new ScaleLibraryLoader(
+            new PathProbe(_besideExe, _appData),
+            () => throw new InvalidOperationException("Manifest resource 'x.json' listed but not readable."));
+
+        ScaleLibraryLoadResult result = loader.Load();
+
+        result.Failures.Should().ContainSingle()
+            .Which.Reason.Should().Contain("listed but not readable");
+        result.Library.Count.Should().Be(72, "the generated melakarta are unaffected by an embedded-tier failure");
+        Directory.Exists(Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName)).Should().BeTrue(
+            "the writable folder is still resolved and created; there was simply nothing to materialise");
+    }
 }

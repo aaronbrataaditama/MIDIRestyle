@@ -63,12 +63,22 @@ public sealed class ScaleLibraryLoader
     public const string UserScalesFileName = "user.scales.json";
 
     private readonly PathProbe _pathProbe;
-    private readonly IReadOnlyList<EmbeddedScaleAsset>? _embeddedAssets;
+    private readonly Func<IReadOnlyList<EmbeddedScaleAsset>> _readEmbeddedAssets;
 
     public ScaleLibraryLoader(PathProbe? pathProbe = null, IReadOnlyList<EmbeddedScaleAsset>? embeddedAssets = null)
+        : this(pathProbe, embeddedAssets is null ? EmbeddedScaleAssets.ReadAll : () => embeddedAssets)
+    {
+    }
+
+    /// <summary>
+    /// Test seam. <see cref="EmbeddedScaleAssets.ReadAll"/> throws if a manifest resource is listed but
+    /// will not open, and <see cref="Load"/> promises never to throw - this is how a test supplies a
+    /// reader that fails, so that promise is pinned rather than assumed.
+    /// </summary>
+    internal ScaleLibraryLoader(PathProbe? pathProbe, Func<IReadOnlyList<EmbeddedScaleAsset>> readEmbeddedAssets)
     {
         _pathProbe = pathProbe ?? PathProbe.Default();
-        _embeddedAssets = embeddedAssets;
+        _readEmbeddedAssets = readEmbeddedAssets;
     }
 
     /// <summary>
@@ -82,7 +92,7 @@ public sealed class ScaleLibraryLoader
 
         IReadOnlyList<Scale> generated = MelakartaGenerator.GenerateAll();
 
-        IReadOnlyList<EmbeddedScaleAsset> embeddedAssets = _embeddedAssets ?? EmbeddedScaleAssets.ReadAll();
+        IReadOnlyList<EmbeddedScaleAsset> embeddedAssets = ReadEmbeddedAssets(failures);
         List<Scale> embeddedScales = LoadScales(
             embeddedAssets.Select(a => (Label: $"(embedded:{a.FileName})", Json: (string?)a.Json)),
             failures);
@@ -115,6 +125,31 @@ public sealed class ScaleLibraryLoader
             scalesDirectory,
             resolved.IsBesideExe,
             reason);
+    }
+
+    /// <summary>
+    /// The embedded assets, or none plus a reported failure if they cannot be read at all.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="EmbeddedScaleAssets.ReadAll"/> throws when a manifest resource is enumerated but will
+    /// not open - vanishingly unlikely for a single-file assembly, but <see cref="Load"/> is documented
+    /// as never throwing and the MCP server's startup now depends on that, so the failure degrades to
+    /// "no embedded scales, and here is why" instead of taking the process down. The catch is
+    /// deliberately broad: the contract is about <em>any</em> failure, and <c>ReadAll</c> itself stays
+    /// loud for callers that want the exception. The generated melakarta and anything in the scales
+    /// folder still load, so the app comes up with a usable, if reduced, library.
+    /// </remarks>
+    private IReadOnlyList<EmbeddedScaleAsset> ReadEmbeddedAssets(List<ScaleLoadFailure> failures)
+    {
+        try
+        {
+            return _readEmbeddedAssets();
+        }
+        catch (Exception ex)
+        {
+            failures.Add(new ScaleLoadFailure("(embedded)", $"could not be read: {ex.Message}"));
+            return [];
+        }
     }
 
     /// <summary>
