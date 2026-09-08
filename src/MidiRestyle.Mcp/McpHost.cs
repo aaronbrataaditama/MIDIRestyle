@@ -39,9 +39,7 @@ public static partial class McpHost
             PromptCollection = [],
         };
 
-        // `probe` is carried for the file tools a later task adds (new MidiTools(library, probe));
-        // the scale tools need nothing but the library.
-        object[] toolOwners = [new ScaleTools(library)];
+        object[] toolOwners = [new ScaleTools(library), new MidiTools(library, probe)];
         foreach (object owner in toolOwners)
         {
             foreach (MethodInfo method in AttributedMethods<McpServerToolAttribute>(owner))
