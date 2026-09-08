@@ -435,6 +435,15 @@ public sealed class RestyleMidiTests : IDisposable
             (Args(input, ("strategy", "sideways")), "strategy 'sideways' is not valid"),
             (Args(input, ("outputPath", "")), "must be an absolute path"),
             (Args(input, ("outputPath", "..\\escape.mid")), "must be an absolute path"),
+            // Path.GetFullPath THROWS on these two rather than returning anything, and it runs before
+            // the tool's try block - so without an explicit guard they escape as an SDK-wrapped
+            // exception, not a refusal. Pinned to our own wording: NotContain("Exception") would not
+            // catch it, because the SDK's generic wrapper text does not contain that word either.
+            (Args(input, ("outputPath", "C:\\music\\x\u0000y.mid")), "is not a usable path"),
+            (Args(input, ("outputPath", "C:\\music\\" + new string('x', 40_000) + ".mid")), "is not a usable path"),
+            // The same throwing values on inputPath: these must be refused by the loader before any path
+            // arithmetic touches them, so this leg proves the hole is not merely moved rather than closed.
+            (Args("C:\\music\\x\u0000y.mid"), "was not found"),
             (Args(input, ("targetScaleId", "")), "targetScaleId is required"),
             (Args(input, ("targetScaleId", "no.such.scale")), "is not a known scale id"),
             (Args(input, ("targetTonic", "")), "targetTonic"),

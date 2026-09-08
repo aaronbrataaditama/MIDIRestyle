@@ -98,6 +98,27 @@ public static class OutputPathPolicy
     /// </summary>
     internal static string Full(string p) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
 
+    /// <summary>
+    /// <see cref="Path.GetFullPath(string)"/> THROWS rather than returning anything when the OS cannot
+    /// resolve a path at all - an embedded NUL, or one past the Win32 length limit. Both are reachable
+    /// from an agent-supplied outputPath, and validation deliberately runs BEFORE the calling tool's
+    /// try block, so an unguarded call escapes as an SDK-wrapped exception instead of a refusal. Resolve
+    /// defensively so the caller can refuse in its own words like every other bad path.
+    /// </summary>
+    private static bool TryFull(string p, out string full)
+    {
+        try
+        {
+            full = Full(p);
+            return true;
+        }
+        catch (Exception e) when (e is ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            full = string.Empty;
+            return false;
+        }
+    }
+
     public static string? ValidateInputPath(string path)
     {
         if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path))
@@ -122,7 +143,14 @@ public static class OutputPathPolicy
             return $"outputPath '{outputPath}' must be an absolute path.";
         }
 
-        string full = Full(outputPath);
+        // Deliberately does not echo outputPath back: the two values that reach here are an embedded
+        // NUL and a 40,000-character path, and neither belongs in a message an agent will read.
+        if (!TryFull(outputPath, out string full))
+        {
+            return "outputPath is not a usable path: it contains a character the file system cannot "
+                + "store, or it is longer than the operating system allows.";
+        }
+
         if (!allowedExtensions.Contains(Path.GetExtension(full)))
         {
             return $"outputPath must end in {string.Join(" or ", allowedExtensions)}.";
@@ -133,7 +161,10 @@ public static class OutputPathPolicy
             return $"outputPath '{outputPath}' {reason}";
         }
 
-        if (string.Equals(full, Full(inputPath), StringComparison.OrdinalIgnoreCase) && !overwrite)
+        // An inputPath that will not resolve cannot equal one that did, so a failure here is simply "not
+        // the same file" - the loader has already reported anything genuinely wrong with it.
+        if (TryFull(inputPath, out string fullInput)
+            && string.Equals(full, fullInput, StringComparison.OrdinalIgnoreCase) && !overwrite)
         {
             return "outputPath is the input file; pass overwrite=true to replace it in place.";
         }
