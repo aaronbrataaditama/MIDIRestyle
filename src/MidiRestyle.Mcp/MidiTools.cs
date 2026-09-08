@@ -1,7 +1,9 @@
 using System.ComponentModel;
+using System.Text;
 using MidiRestyle.Core.Analysis;
 using MidiRestyle.Core.Io;
 using MidiRestyle.Core.Model;
+using MidiRestyle.Core.Notation;
 using MidiRestyle.Core.Output;
 using MidiRestyle.Core.Restyle;
 using MidiRestyle.Core.Scales;
@@ -34,6 +36,14 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
     // the filesystem, which server construction should not.
     private readonly RestyleRequestResolver _resolver = new(library);
     private readonly Lazy<ProtectedLocations> _protected = new(() => ProtectedLocations.FromProcess(probe));
+
+    /// <summary>
+    /// MusicXML's own declaration already says UTF-8, and some older readers choke on a BOM - the same
+    /// call <c>MusicXmlExporter</c> makes for the file it writes itself. Stated explicitly rather than
+    /// relied on: <see cref="Encoding.GetBytes(string)"/> emits no preamble whatever the flag says, so
+    /// the guarantee lives in the fact that nothing prepends <c>GetPreamble</c> to these bytes.
+    /// </summary>
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     [McpServerTool(Name = "inspect_midi", ReadOnly = true, Idempotent = true, Destructive = false, OpenWorld = false)]
     [Description("Read a MIDI file without changing it: format, tempo, time signatures, one row per track-channel " +
@@ -97,11 +107,13 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
             return ToolResults.Error(error);
         }
 
-        string output = outputPath ?? OutputPathPolicy.DefaultOutputPath(inputPath, resolution.Resolved.TargetScaleId, ".mid");
+        string requested = outputPath ?? OutputPathPolicy.DefaultOutputPath(inputPath, resolution.Resolved.TargetScaleId, ".mid");
 
         // Order matters and is load-bearing: the path is judged before a single byte is written, so a
-        // refused destination is never touched at all - not even by the atomic write's temp file.
-        if (OutputPathPolicy.ValidateOutputPath(output, inputPath, overwrite, OutputPathPolicy.MidiExtensions, _protected.Value) is { } outputError)
+        // refused destination is never touched at all - not even by the atomic write's temp file. The
+        // canonical form it hands back is what is written and what is reported, so the guard, the
+        // write and the agent all name one destination.
+        if (OutputPathPolicy.ValidateOutputPath(requested, inputPath, overwrite, OutputPathPolicy.MidiExtensions, _protected.Value, out string output) is { } outputError)
         {
             return ToolResults.Error(outputError);
         }
@@ -163,6 +175,99 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
                 ScaleDescriptors.Round(allocation.Budget.WorstErrorCents),
                 [.. allocation.Muted.Select(m => new MutedTrack(m.TrackIndex, m.Channel, m.NoteCount))]),
             new FidelityInfo(EnumNames.Echo(fidelity.Badge), ScaleDescriptors.RoundOrNull(fidelity.MaxDeviationCents), fidelity.WorstDegreeIndex),
+            warnings));
+    }
+
+    [McpServerTool(Name = "export_musicxml", ReadOnly = false, Idempotent = false, Destructive = true, OpenWorld = false)]
+    [Description("Restyle a MIDI file and write the result as a MusicXML score (.musicxml or .xml) that notation software can open. " +
+                 "Only for target scales that can be written on a staff - check list_scales' notatable flag; a scale that cannot be " +
+                 "spelled is refused, and restyle_midi produces a playable .mid for it instead. Same parameters as restyle_midi, plus " +
+                 "detectTuplets. Overwrites an existing output only when overwrite is true.")]
+    public CallToolResult ExportMusicXml(
+        [Description("Absolute path to the source .mid file.")] string inputPath,
+        [Description("Target scale id from list_scales; must be one list_scales reports as notatable.")] string targetScaleId,
+        [Description("Target tonic: note name with optional accidental and octave (D, Eb4, F#3) or MIDI number as a string. Default: detected key's tonic at octave 4.")] string? targetTonic = null,
+        [Description("Source scale id. Default: ionian or aeolian per the detected key. Unused under strategy nearestPitch.")] string? sourceScaleId = null,
+        [Description("Source tonic, same forms as targetTonic. Default: detected key's tonic.")] string? sourceTonic = null,
+        [Description("Track-channels to leave untouched, as {track, channel} pairs from inspect_midi. Drums (channel 9) are never notated.")] IReadOnlyList<TrackChannelRef>? exclude = null,
+        [Description("scaleDegree (default) maps degree to degree; nearestPitch snaps each note to the nearest target pitch.")] string? strategy = null,
+        [Description("What to do with notes outside the source scale: snapToNearestSourceDegree (default), passThrough, drop.")] string? nonScaleNotes = null,
+        [Description("When two notes map to one pitch: merge (default) or displaceOctave.")] string? collisions = null,
+        [Description("When a mapped note leaves MIDI range: shiftIntoRange (default), foldOctave, drop.")] string? range = null,
+        [Description("Pitch-bend clustering tolerance in cents, 0.5..50 (default 5). Affects the restyle, not the engraving.")] double? toleranceCents = null,
+        [Description("Absolute output path ending in .musicxml or .xml. Default: beside the input as <name>.<scaleId>.musicxml.")] string? outputPath = null,
+        [Description("Replace an existing output file (default false).")] bool overwrite = false,
+        [Description("Detect triplets and sextuplets when quantising rhythm (default true). Off, triplet material is spelled as the nearest straight value.")] bool detectTuplets = true)
+    {
+        var request = new RestyleRequest(inputPath, targetScaleId, targetTonic, sourceScaleId, sourceTonic, exclude,
+            strategy, nonScaleNotes, collisions, range, toleranceCents, outputPath, overwrite);
+
+        if (!_resolver.TryResolve(request, out Resolution? resolution, out string? error))
+        {
+            return ToolResults.Error(error);
+        }
+
+        // CLAUDE.md: the authored flag gates the staff, but the speller decides - several dastgahs and
+        // makams are flagged notatable and still run to eight or nine degrees, which no seven-letter
+        // spelling reaches. Asking the flag alone would write a score whose noteheads are a guess.
+        if (!ScaleDescriptors.IsNotatable(resolution.Settings.TargetScale, out string? why))
+        {
+            return ToolResults.Error(
+                $"'{resolution.Settings.TargetScale.Id}' cannot be written on a staff: "
+                + $"{why ?? "it is authored as not notatable, because no staff spelling of it would be honest"}. "
+                + "Use restyle_midi to produce a playable .mid instead, or describe_scale to see the degrees.");
+        }
+
+        string requested = outputPath ?? OutputPathPolicy.DefaultOutputPath(inputPath, resolution.Resolved.TargetScaleId, ".musicxml");
+
+        // Same order, and for the same reason, as restyle_midi: judged before a byte is written.
+        if (OutputPathPolicy.ValidateOutputPath(requested, inputPath, overwrite, OutputPathPolicy.MusicXmlExtensions, _protected.Value, out string output) is { } outputError)
+        {
+            return ToolResults.Error(outputError);
+        }
+
+        NotationScore score;
+        byte[] bytes;
+        string? tally;
+        try
+        {
+            RestyleResult result = RestyleEngine.Restyle(resolution.Project, resolution.Settings);
+
+            // The single source of measures, ties, rests and voices - the same builder the staff view
+            // and the degree view read. A second path here would eventually disagree with the screen.
+            score = NotationBuilder.Build(resolution.Project, result.Tracks, resolution.Settings,
+                QuantiseOptions.Default with { DetectTuplets = detectTuplets });
+
+            bytes = Utf8NoBom.GetBytes(MusicXmlExporter.ToXml(score));
+            tally = result.Tally.Describe();
+        }
+        catch (Exception ex) when (ex is MusicXmlExportException or InvalidOperationException or NotSupportedException)
+        {
+            // MusicXmlExportException is genuinely reachable here, unlike on restyle_midi's path: a
+            // file whose only notes are drums notates to no parts at all, and MusicXML has no way to
+            // say that. The other two are the backstop for a bug in our own pipeline, which must
+            // reach the agent as one failed call rather than as a dropped JSON-RPC session.
+            return ToolResults.Error($"MusicXML export failed: {ex.Message}");
+        }
+
+        // Rendered in full before anything is written, so a failure mid-render cannot leave a partial
+        // file; WriteAtomically then makes the replacement itself all-or-nothing.
+        if (OutputPathPolicy.WriteAtomically(output, bytes, overwrite) is { } writeError)
+        {
+            return ToolResults.Error(writeError);
+        }
+
+        var warnings = new List<string>(resolution.Warnings);
+        if (tally is not null) { warnings.Add(tally); }
+
+        // No channel report: pitch bend and the channel budget belong to playback and to .mid export.
+        // A staff has neither, so reporting one here would describe a plan this call never made.
+        return ToolResults.Ok(new MusicXmlReport(
+            output,
+            resolution.Resolved,
+            score.MeasureCount,
+            [.. score.Parts.Select(p => p.Name)],
+            score.Diagnostics,
             warnings));
     }
 

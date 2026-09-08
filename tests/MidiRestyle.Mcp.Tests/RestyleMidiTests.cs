@@ -220,6 +220,27 @@ public sealed class RestyleMidiTests : IDisposable
         File.ReadAllBytes(input).Should().Equal(before, "the input is untouched by a refused call");
     }
 
+    /// <summary>
+    /// The path is canonicalised once, and the canonical form is what is written and what is reported.
+    /// Validation always judged the resolved form; the temp file and the report used to be built from
+    /// the raw agent string, so an agent got back a path it had to normalise itself.
+    /// </summary>
+    [Fact]
+    public async Task TheReportedPathIsTheCanonicalOneTheFileWasWrittenTo()
+    {
+        await using McpTestHost host = await McpTestHost.StartAsync();
+        string input = Major();
+
+        string canonical = Path.Combine(_dir, "canon.mid");
+        string roundabout = Path.Combine(_dir, "sub", "..", "canon.mid");
+
+        JsonElement report = await host.CallJsonAsync("restyle_midi", Args(input, ("outputPath", roundabout)));
+
+        report.GetProperty("outputPath").GetString().Should().Be(canonical, "the raw string is normalised once, not echoed back");
+        File.Exists(canonical).Should().BeTrue();
+        Directory.GetFiles(_dir, "*.tmp-*").Should().BeEmpty();
+    }
+
     [Fact]
     public async Task RefusedExtensionsAndMissingDirectoriesAreErrors()
     {

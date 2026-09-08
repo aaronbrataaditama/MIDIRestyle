@@ -57,7 +57,7 @@ public sealed class OutputPathPolicyTests : IDisposable
         // The exe lives in the same folder as the user's MIDI files - the common portable layout.
         string input = Path.Combine(_data, "tune.mid");
         string output = OutputPathPolicy.DefaultOutputPath(input, "x", ".mid");
-        OutputPathPolicy.ValidateOutputPath(output, input, false, OutputPathPolicy.MidiExtensions, _protected).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(output, input, false, OutputPathPolicy.MidiExtensions, _protected, out _).Should().BeNull();
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public sealed class OutputPathPolicyTests : IDisposable
     {
         string output = Path.Combine(_data, relative.Replace('/', Path.DirectorySeparatorChar));
         var allowAll = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".exe", ".json", ".mid" };
-        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), true, allowAll, _protected)
+        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), true, allowAll, _protected, out _)
             .Should().Contain("refused");
     }
 
@@ -79,7 +79,7 @@ public sealed class OutputPathPolicyTests : IDisposable
         // _protected's DataRoot/BaseDirectory is _root/data - "data" must not be treated as
         // containing "dataother", which a raw character-prefix comparison would get wrong.
         string output = Path.Combine(_root, "dataother", "x.mid");
-        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected)
+        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected, out _)
             .Should().BeNull();
     }
 
@@ -89,7 +89,7 @@ public sealed class OutputPathPolicyTests : IDisposable
     [InlineData(@"\rooted-but-driveless.mid")]
     public void OutputMustBeFullyQualified(string path)
     {
-        OutputPathPolicy.ValidateOutputPath(path, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected)
+        OutputPathPolicy.ValidateOutputPath(path, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, _protected, out _)
             .Should().Contain("absolute");
     }
 
@@ -97,9 +97,9 @@ public sealed class OutputPathPolicyTests : IDisposable
     public void MusicXmlExtensionAllowListAcceptsItsOwnExtensionsAndRejectsOthers()
     {
         string input = Path.Combine(_music, "in.mid");
-        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.musicxml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().BeNull();
-        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.xml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().BeNull();
-        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.mid"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected).Should().Contain(".musicxml");
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.musicxml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected, out _).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.xml"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected, out _).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.mid"), input, false, OutputPathPolicy.MusicXmlExtensions, _protected, out _).Should().Contain(".musicxml");
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public sealed class OutputPathPolicyTests : IDisposable
     {
         var programFiles = _protected with { BaseDirectory = Path.Combine(_root, "program-files") };
         string output = Path.Combine(programFiles.BaseDirectory, "out.mid");
-        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, programFiles)
+        OutputPathPolicy.ValidateOutputPath(output, Path.Combine(_music, "in.mid"), false, OutputPathPolicy.MidiExtensions, programFiles, out _)
             .Should().Contain("refused");
     }
 
@@ -115,16 +115,36 @@ public sealed class OutputPathPolicyTests : IDisposable
     public void ExtensionAllowListIsCaseInsensitive()
     {
         string input = Path.Combine(_music, "in.mid");
-        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "OUT.MIDI"), input, false, OutputPathPolicy.MidiExtensions, _protected).Should().BeNull();
-        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.wav"), input, false, OutputPathPolicy.MidiExtensions, _protected).Should().Contain(".mid");
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "OUT.MIDI"), input, false, OutputPathPolicy.MidiExtensions, _protected, out _).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.wav"), input, false, OutputPathPolicy.MidiExtensions, _protected, out _).Should().Contain(".mid");
     }
 
     [Fact]
     public void OutputEqualToInputNeedsOverwrite()
     {
         string input = Path.Combine(_music, "same.mid");
-        OutputPathPolicy.ValidateOutputPath(input, input, false, OutputPathPolicy.MidiExtensions, _protected).Should().Contain("overwrite");
-        OutputPathPolicy.ValidateOutputPath(input, input, true, OutputPathPolicy.MidiExtensions, _protected).Should().BeNull();
+        OutputPathPolicy.ValidateOutputPath(input, input, false, OutputPathPolicy.MidiExtensions, _protected, out _).Should().Contain("overwrite");
+        OutputPathPolicy.ValidateOutputPath(input, input, true, OutputPathPolicy.MidiExtensions, _protected, out _).Should().BeNull();
+    }
+
+    /// <summary>
+    /// The validator judges the resolved path, so it is the resolved path it hands back - otherwise a
+    /// caller writes to a string the guard never looked at, and reports one the agent must normalise
+    /// itself. Nothing usable comes back from a refusal.
+    /// </summary>
+    [Fact]
+    public void TheCanonicalPathComesBackSoTheCallerNeverWritesToTheRawString()
+    {
+        string input = Path.Combine(_music, "in.mid");
+        string roundabout = Path.Combine(_music, "sub", "..", "out.mid");
+
+        OutputPathPolicy.ValidateOutputPath(roundabout, input, false, OutputPathPolicy.MidiExtensions, _protected, out string canonical)
+            .Should().BeNull();
+        canonical.Should().Be(Path.Combine(_music, "out.mid"));
+
+        OutputPathPolicy.ValidateOutputPath(Path.Combine(_music, "out.wav"), input, false, OutputPathPolicy.MidiExtensions, _protected, out string refused)
+            .Should().NotBeNull();
+        refused.Should().BeEmpty("a refused path must not hand back something a caller could write to");
     }
 
     [Fact]

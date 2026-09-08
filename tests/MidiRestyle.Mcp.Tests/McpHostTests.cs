@@ -26,7 +26,8 @@ public class McpHostTests
         host.Client.ServerCapabilities.Prompts.Should().NotBeNull("prompts are declared before Task 17 fills them in");
 
         IList<McpClientTool> tools = await host.Client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
-        tools.Select(t => t.Name).Should().BeEquivalentTo(["list_scales", "describe_scale", "inspect_midi", "restyle_midi"]);
+        tools.Select(t => t.Name).Should().BeEquivalentTo(
+            ["list_scales", "describe_scale", "inspect_midi", "restyle_midi", "export_musicxml"]);
 
         McpClientTool list = tools.Single(t => t.Name == "list_scales");
         list.Description.Should().Contain("Search and filter");

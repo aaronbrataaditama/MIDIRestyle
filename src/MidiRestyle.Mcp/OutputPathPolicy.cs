@@ -134,10 +134,23 @@ public static class OutputPathPolicy
             Path.GetDirectoryName(inputPath) ?? "",
             $"{Path.GetFileNameWithoutExtension(inputPath)}.{scaleId}{extension}");
 
+    /// <param name="canonical">
+    /// The resolved path this call judged, and the ONLY path a caller may go on to write to or report.
+    /// Empty when the call refuses. Handing it back rather than leaving the caller with the raw agent
+    /// string makes validation, the write and the report name one destination by construction:
+    /// <c>C:\music\..\..\..\x.mid</c> is judged as <c>C:\x.mid</c>. Writing the raw form happens to
+    /// reach the same file - Win32 resolves <c>..</c> lexically, and the temp file inherits the same
+    /// segments - so the difference an agent can see is the reported path, which would otherwise come
+    /// back un-normalised for it to normalise itself. That is a contract, and it is frozen once the
+    /// tools' wire shape is.
+    /// </param>
     public static string? ValidateOutputPath(
         string outputPath, string inputPath, bool overwrite,
-        IReadOnlySet<string> allowedExtensions, ProtectedLocations protectedLocations)
+        IReadOnlySet<string> allowedExtensions, ProtectedLocations protectedLocations,
+        out string canonical)
     {
+        canonical = string.Empty;
+
         if (string.IsNullOrWhiteSpace(outputPath) || !Path.IsPathFullyQualified(outputPath))
         {
             return $"outputPath '{outputPath}' must be an absolute path.";
@@ -169,6 +182,7 @@ public static class OutputPathPolicy
             return "outputPath is the input file; pass overwrite=true to replace it in place.";
         }
 
+        canonical = full;
         return null;
     }
 
