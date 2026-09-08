@@ -8,7 +8,16 @@ public static class ScaleLookup
     public static bool TryFind(ScaleLibrary library, string id, string parameterName,
         [NotNullWhen(true)] out Scale? scale, [NotNullWhen(false)] out string? error)
     {
-        scale = string.IsNullOrWhiteSpace(id) ? null : library.Find(id);
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            // Search returns the whole library for a blank query, so falling through would answer a
+            // missing id with three arbitrary scales dressed up as near matches.
+            scale = null;
+            error = $"{parameterName} is required; use list_scales to search.";
+            return false;
+        }
+
+        scale = library.Find(id);
         if (scale is not null)
         {
             error = null;

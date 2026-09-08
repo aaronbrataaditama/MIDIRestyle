@@ -52,13 +52,15 @@ public sealed class RestyleRequestResolver(ScaleLibrary library)
         RangePolicy range = ParseEnum(request.Range, "range", MappingOptions.Default.Range, errors);
 
         double tolerance = request.ToleranceCents ?? RestyleDefaults.ToleranceCents;
-        if (tolerance < RestyleDefaults.MinToleranceCents || tolerance > RestyleDefaults.MaxToleranceCents)
+        if (!double.IsFinite(tolerance)
+            || tolerance < RestyleDefaults.MinToleranceCents
+            || tolerance > RestyleDefaults.MaxToleranceCents)
         {
             errors.Add(string.Create(CultureInfo.InvariantCulture,
                 $"toleranceCents {tolerance} is outside {RestyleDefaults.MinToleranceCents}..{RestyleDefaults.MaxToleranceCents}."));
         }
 
-        if (request.Exclude?.Any(e => e.Track < 0 || e.Channel is < 0 or > 15) == true)
+        if (request.Exclude?.Any(e => e is null || e.Track < 0 || e.Channel is < 0 or > 15) == true)
         {
             errors.Add("exclude entries need track >= 0 and channel 0..15.");
         }
@@ -78,6 +80,12 @@ public sealed class RestyleRequestResolver(ScaleLibrary library)
         var excluded = new HashSet<(int Track, int Channel)>();
         foreach (TrackChannelRef e in request.Exclude ?? [])
         {
+            if (e is null)
+            {
+                error = "exclude entries need track >= 0 and channel 0..15.";
+                return false;
+            }
+
             if (!project.Tracks.Any(t => t.TrackIndex == e.Track && t.Channel == e.Channel))
             {
                 string valid = string.Join(", ", project.Tracks.Select(t => $"track {t.TrackIndex}, channel {t.Channel}"));

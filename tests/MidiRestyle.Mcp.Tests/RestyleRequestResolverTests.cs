@@ -138,4 +138,53 @@ public sealed class RestyleRequestResolverTests : IDisposable
         _resolver.TryResolve(Request(input), out _, out var error).Should().BeFalse();
         error.Should().NotBeNullOrWhiteSpace();
     }
+    // Review follow-ups, Task 12: both of these threw or slipped through before the fix, and both are
+    // reachable from ordinary agent JSON rather than only from hand-built objects.
+
+    [Fact]
+    public void ANullExcludeEntryIsRejectedRatherThanDereferenced()
+    {
+        string input = Fixture("null-exclude.mid", MidiFixtures.CMajorNotes);
+        var request = Request(input) with { Exclude = new TrackChannelRef[] { null! } };
+
+        // "exclude": [null] is legal JSON, so this must be an error, not a NullReferenceException.
+        _resolver.TryResolve(request, out var r, out string? error).Should().BeFalse();
+
+        r.Should().BeNull();
+        error.Should().Contain("exclude entries need");
+    }
+
+    [Fact]
+    public void ANullExcludeEntryAlongsideAValidOneIsAlsoRejected()
+    {
+        // The first guard runs before the file loads; this one reaches the post-load foreach, which
+        // dereferenced the same entries.
+        string input = Fixture("null-exclude-2.mid", MidiFixtures.CMajorNotes);
+        var request = Request(input) with { Exclude = [new TrackChannelRef(0, 0), null!] };
+
+        _resolver.TryResolve(request, out var r, out string? error).Should().BeFalse();
+
+        r.Should().BeNull();
+        error.Should().Contain("exclude entries need");
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void ANonFiniteToleranceIsRefused(double tolerance)
+    {
+        // NaN is the live one: McpJson.Options is built on JsonSerializerDefaults.Web, whose
+        // AllowReadingFromString binds "toleranceCents": "NaN" to a real NaN. Both range comparisons
+        // are false for NaN, so it used to sail through and surface as an ArgumentOutOfRangeException
+        // out of OffsetClusterer once the settings reached the engine.
+        string input = Fixture("tolerance.mid", MidiFixtures.CMajorNotes);
+        var request = Request(input) with { ToleranceCents = tolerance };
+
+        _resolver.TryResolve(request, out var r, out string? error).Should().BeFalse();
+
+        r.Should().BeNull();
+        error.Should().Contain("toleranceCents");
+    }
+
 }
