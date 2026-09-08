@@ -24,7 +24,7 @@ public sealed class InspectMidiTests : IDisposable
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = MidiFixtures.Write(Path.Combine(_dir, "major.mid"), MidiFixtures.CMajorNotes);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.GetProperty("path").GetString().Should().Be(input);
         r.GetProperty("format").GetString().Should().Be("multiTrack");
@@ -59,7 +59,7 @@ public sealed class InspectMidiTests : IDisposable
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = MidiFixtures.Write(Path.Combine(_dir, "minor.mid"), MidiFixtures.AMinorNotes);
 
-        JsonElement key = (await host.CallJsonAsync("inspect_midi", new() { ["path"] = input })).GetProperty("key");
+        JsonElement key = (await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input })).GetProperty("key");
 
         key.GetProperty("candidates")[0].GetProperty("tonic").GetString().Should().Be("A");
         key.GetProperty("candidates")[0].GetProperty("mode").GetString().Should().Be("minor");
@@ -81,7 +81,7 @@ public sealed class InspectMidiTests : IDisposable
         string input = MidiFixtures.Write(
             Path.Combine(_dir, "bare-scale.mid"), [(60, 0), (62, 0), (64, 0), (65, 0), (67, 0), (69, 0), (71, 0)]);
 
-        JsonElement key = (await host.CallJsonAsync("inspect_midi", new() { ["path"] = input })).GetProperty("key");
+        JsonElement key = (await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input })).GetProperty("key");
 
         key.GetProperty("outcome").GetString().Should().Be("ambiguous");
         key.GetProperty("isAmbiguous").GetBoolean().Should().BeTrue();
@@ -101,7 +101,7 @@ public sealed class InspectMidiTests : IDisposable
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = MidiFixtures.Write(Path.Combine(_dir, "f0.mid"), [(60, 0), (67, 1), (36, 9)], format0: true);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.GetProperty("format").GetString().Should().Be("singleTrack");
         var tracks = r.GetProperty("tracks").EnumerateArray().ToList();
@@ -127,7 +127,7 @@ public sealed class InspectMidiTests : IDisposable
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = MidiFixtures.Write(Path.Combine(_dir, "drums.mid"), MidiFixtures.DrumsOnlyNotes);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.GetProperty("key").GetProperty("outcome").GetString().Should().Be("noKeyDetected");
         r.GetProperty("key").GetProperty("candidates").GetArrayLength().Should()
@@ -151,13 +151,13 @@ public sealed class InspectMidiTests : IDisposable
     {
         await using McpTestHost host = await McpTestHost.StartAsync();
 
-        CallToolResult relative = await host.CallAsync("inspect_midi", new() { ["path"] = "tune.mid" });
+        CallToolResult relative = await host.CallAsync("inspect_midi", new() { ["inputPath"] = "tune.mid" });
         relative.IsError.Should().Be(true);
         ToolResults.TextOf(relative).Should().Be(OutputPathPolicy.ValidateInputPath("tune.mid"));
         ToolResults.TextOf(relative).Should().Contain("absolute");
 
         string missing = Path.Combine(_dir, "nothing-here.mid");
-        CallToolResult absent = await host.CallAsync("inspect_midi", new() { ["path"] = missing });
+        CallToolResult absent = await host.CallAsync("inspect_midi", new() { ["inputPath"] = missing });
         absent.IsError.Should().Be(true);
         ToolResults.TextOf(absent).Should().Be(OutputPathPolicy.ValidateInputPath(missing));
         ToolResults.TextOf(absent).Should().Contain("not found");
@@ -175,23 +175,23 @@ public sealed class InspectMidiTests : IDisposable
 
         string text = Path.Combine(_dir, "text.mid");
         File.WriteAllText(text, "nope");
-        CallToolResult notMidi = await host.CallAsync("inspect_midi", new() { ["path"] = text });
+        CallToolResult notMidi = await host.CallAsync("inspect_midi", new() { ["inputPath"] = text });
         notMidi.IsError.Should().Be(true);
         ToolResults.TextOf(notMidi).Should().Contain("Could not load");
 
         string truncated = Path.Combine(_dir, "truncated.mid");
         File.WriteAllBytes(truncated, [0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00]);
-        (await host.CallAsync("inspect_midi", new() { ["path"] = truncated })).IsError.Should().Be(true);
+        (await host.CallAsync("inspect_midi", new() { ["inputPath"] = truncated })).IsError.Should().Be(true);
 
         foreach (string? hostile in new[] { "", "   ", _dir, Path.Combine(_dir, "no", "such", "dir", "x.mid"), "C:relative.mid", "\\rooted.mid" })
         {
-            CallToolResult result = await host.CallAsync("inspect_midi", new() { ["path"] = hostile });
+            CallToolResult result = await host.CallAsync("inspect_midi", new() { ["inputPath"] = hostile });
             result.IsError.Should().Be(true, $"'{hostile}' must come back as a tool error");
             ToolResults.TextOf(result).Should().NotBeNullOrWhiteSpace();
         }
 
         string good = MidiFixtures.Write(Path.Combine(_dir, "after.mid"), MidiFixtures.CMajorNotes);
-        (await host.CallJsonAsync("inspect_midi", new() { ["path"] = good }))
+        (await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = good }))
             .GetProperty("totalNotes").GetInt32().Should().Be(13, "the server is still serving after every refusal");
     }
 
@@ -221,7 +221,7 @@ public sealed class InspectMidiTests : IDisposable
         var file = new MidiFile(late, early) { TimeDivision = new TicksPerQuarterNoteTimeDivision(480) };
         file.Write(input, overwriteFile: true, format: MidiFileFormat.MultiTrack);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.GetProperty("initialTempoBpm").GetDouble().Should().Be(60, "1,000,000 microseconds per quarter is 60 BPM");
         JsonElement signature = r.GetProperty("timeSignatures").EnumerateArray().Single();
@@ -255,7 +255,7 @@ public sealed class InspectMidiTests : IDisposable
         new MidiFile(first, second) { TimeDivision = new TicksPerQuarterNoteTimeDivision(480) }
             .Write(input, overwriteFile: true, format: MidiFileFormat.MultiTrack);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.GetProperty("title").GetString().Should().Be("Sonata in Slendro", "the first chunk's name titles the file");
         JsonElement track = r.GetProperty("tracks").EnumerateArray().Single();
@@ -270,7 +270,7 @@ public sealed class InspectMidiTests : IDisposable
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = MidiFixtures.Write(Path.Combine(_dir, "anon.mid"), MidiFixtures.CMajorNotes);
 
-        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["path"] = input });
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
 
         r.TryGetProperty("title", out _).Should().BeFalse();
         JsonElement track = r.GetProperty("tracks").EnumerateArray().Single();
@@ -289,7 +289,21 @@ public sealed class InspectMidiTests : IDisposable
         tool.ProtocolTool.Annotations!.ReadOnlyHint.Should().BeTrue();
         tool.ProtocolTool.Annotations.DestructiveHint.Should().BeFalse();
         tool.Description.Should().Contain("restyle_midi", "the description points the agent at the next call");
-        tool.JsonSchema.GetProperty("properties").GetProperty("path").GetProperty("description")
+        tool.JsonSchema.GetProperty("properties").GetProperty("inputPath").GetProperty("description")
             .GetString().Should().Contain("Absolute");
+    }
+
+    [Fact]
+    public async Task DivisionIsReportedBothAsProseAndAsANumber()
+    {
+        // `division` reads "480 PPQN", which a caller cannot compute with. Task 18 is about to freeze
+        // this shape, so the machine-readable field goes in now rather than as a later addition.
+        await using McpTestHost host = await McpTestHost.StartAsync();
+        string input = MidiFixtures.Write(Path.Combine(_dir, "division.mid"), MidiFixtures.CMajorNotes);
+
+        JsonElement r = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
+
+        r.GetProperty("division").GetString().Should().Be("480 PPQN");
+        r.GetProperty("ticksPerQuarterNote").GetInt32().Should().Be(480);
     }
 }

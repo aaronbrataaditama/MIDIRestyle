@@ -88,4 +88,82 @@ public class ScaleToolsTests
         missing.IsError.Should().Be(true);
         ToolResults.TextOf(missing).Should().Contain("middleeast.arabic.maqam-rast");
     }
+
+    /// <summary>
+    /// The Task 13/14 review found that six of the eight filters could each be replaced with
+    /// <c>.Where(s =&gt; true)</c> without failing a test: <c>Contain</c> is satisfied by any superset,
+    /// so the original test pinned inclusion but never exclusion. These compare against an expected
+    /// set computed independently from the unfiltered page, which no pass-through mutation survives.
+    /// </summary>
+    private sealed record Summary(string Id, string? Region, string? Tradition, int DegreeCount,
+        bool Notatable, bool FitsTwelveTet, double? MaxDeviationCents, string? Third);
+
+    private static List<Summary> Summaries(JsonElement page) =>
+        [.. page.GetProperty("scales").EnumerateArray().Select(s => new Summary(
+            s.GetProperty("id").GetString()!,
+            s.GetProperty("region").GetString(),
+            s.GetProperty("tradition").GetString(),
+            s.GetProperty("degreeCount").GetInt32(),
+            s.GetProperty("notatable").GetBoolean(),
+            s.GetProperty("fitsTwelveTet").GetBoolean(),
+            s.GetProperty("maxDeviationCents").ValueKind == JsonValueKind.Null
+                ? null
+                : s.GetProperty("maxDeviationCents").GetDouble(),
+            s.GetProperty("third").GetString()))];
+
+    private static async Task<List<Summary>> AllScales(McpTestHost host) =>
+        Summaries(await host.CallJsonAsync("list_scales", new() { ["limit"] = 200 }));
+
+    private async Task AssertFilterExcludes(string field, object value, Func<Summary, bool> predicate)
+    {
+        await using McpTestHost host = await McpTestHost.StartAsync();
+
+        List<Summary> all = await AllScales(host);
+        string[] expected = [.. all.Where(predicate).Select(s => s.Id).Order()];
+
+        JsonElement filtered = await host.CallJsonAsync("list_scales", new() { [field] = value, ["limit"] = 200 });
+        string[] actual = [.. Summaries(filtered).Select(s => s.Id).Order()];
+
+        expected.Should().NotBeEmpty($"the {field} filter must match something for this to prove anything");
+        expected.Length.Should().BeLessThan(all.Count, $"the {field} filter must exclude something too");
+        actual.Should().Equal(expected, $"the {field} filter must return exactly the scales that satisfy it");
+        filtered.GetProperty("totalMatches").GetInt32().Should().Be(expected.Length);
+    }
+
+    [Fact]
+    public Task RegionFilterExcludes() =>
+        AssertFilterExcludes("region", "Middle East", s => string.Equals(s.Region, "Middle East", StringComparison.OrdinalIgnoreCase));
+
+    [Fact]
+    public async Task TraditionFilterExcludes()
+    {
+        // Taken from the library rather than hard-coded, so this cannot rot when a scale is added.
+        await using McpTestHost probe = await McpTestHost.StartAsync();
+        string tradition = (await AllScales(probe)).First(s => s.Tradition is not null).Tradition!;
+
+        await AssertFilterExcludes("tradition", tradition,
+            s => string.Equals(s.Tradition, tradition, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public Task DegreeCountFilterExcludes() =>
+        AssertFilterExcludes("degreeCount", 5, s => s.DegreeCount == 5);
+
+    [Fact]
+    public Task NotatableFilterExcludes() =>
+        AssertFilterExcludes("notatable", false, s => !s.Notatable);
+
+    [Fact]
+    public Task FitsTwelveTetFilterExcludes() =>
+        AssertFilterExcludes("fitsTwelveTet", false, s => !s.FitsTwelveTet);
+
+    [Fact]
+    public Task ThirdFilterExcludes() =>
+        AssertFilterExcludes("third", "neutral", s => string.Equals(s.Third, "neutral", StringComparison.OrdinalIgnoreCase));
+
+    [Fact]
+    public Task MaxDeviationCentsFilterExcludes() =>
+        // A scale with no finite deviation satisfies no ceiling, which is the branch most likely to
+        // be got wrong: null must fail the filter, not pass it unmeasured.
+        AssertFilterExcludes("maxDeviationCents", 5.0, s => s.MaxDeviationCents <= 5.0);
 }

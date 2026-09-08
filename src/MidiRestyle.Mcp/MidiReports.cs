@@ -41,7 +41,7 @@ public sealed record TimeSignatureInfo(long Ticks, int Numerator, int Denominato
 /// is true. The difference from <paramref name="TotalNotes"/> is percussion and silent rows.
 /// </param>
 public sealed record MidiInspection(
-    string Path, string Format, string Division, long DurationTicks, double? DurationSeconds, string? Title,
+    string Path, string Format, string Division, int? TicksPerQuarterNote, long DurationTicks, double? DurationSeconds, string? Title,
     double? InitialTempoBpm, IReadOnlyList<TimeSignatureInfo> TimeSignatures,
     IReadOnlyList<TrackSummary> Tracks, int TotalNotes, int RestylableNoteCount, KeyReport Key);
 

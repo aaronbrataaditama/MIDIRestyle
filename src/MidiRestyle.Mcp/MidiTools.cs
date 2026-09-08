@@ -36,9 +36,9 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
                  "(the unit restyle_midi's exclude parameter addresses), and key detection with the source scale it implies. " +
                  "Call this before restyle_midi to choose a tonic and decide what to exclude.")]
     public CallToolResult InspectMidi(
-        [Description("Absolute path to the .mid file.")] string path)
+        [Description("Absolute path to the .mid file.")] string inputPath)
     {
-        if (OutputPathPolicy.ValidateInputPath(path) is { } pathError)
+        if (OutputPathPolicy.ValidateInputPath(inputPath) is { } pathError)
         {
             return ToolResults.Error(pathError);
         }
@@ -47,9 +47,9 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
         string? loadError;
         try
         {
-            if (!MidiFileLoader.TryLoad(path, out project, out loadError) || project is null)
+            if (!MidiFileLoader.TryLoad(inputPath, out project, out loadError) || project is null)
             {
-                return ToolResults.Error($"Could not load '{path}': {loadError}");
+                return ToolResults.Error($"Could not load '{inputPath}': {loadError}");
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
@@ -57,10 +57,10 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
             // TryLoad translates every failure the loader anticipates; this is the backstop for the
             // ones it does not - a path the OS rejects only on open, a file whose handle is revoked
             // mid-read. An agent's bad argument must never become an unhandled exception.
-            return ToolResults.Error($"Could not load '{path}': {ex.Message}");
+            return ToolResults.Error($"Could not load '{inputPath}': {ex.Message}");
         }
 
-        return ToolResults.Ok(Inspect(path, project));
+        return ToolResults.Ok(Inspect(inputPath, project));
     }
 
     private static MidiInspection Inspect(string path, MidiProject project)
@@ -72,6 +72,7 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
             path,
             EnumNames.Echo(project.Format),
             project.Division.Describe(),
+            project.Division is TicksPerQuarterNote tpqn ? tpqn.Ticks : null,
             project.DurationTicks,
             project.DurationSeconds is { } seconds ? ScaleDescriptors.Round(seconds) : null,
             project.Title,

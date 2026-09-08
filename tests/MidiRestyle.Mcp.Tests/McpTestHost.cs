@@ -13,9 +13,18 @@ namespace MidiRestyle.Mcp.Tests;
 /// </summary>
 internal sealed class McpTestHost : IAsyncDisposable
 {
+    /// <summary>
+    /// Every client call is bounded by this. Without it a server that never answers hangs the whole
+    /// suite with no indication of which test is stuck; with it the test fails and names itself.
+    /// Generous enough that a slow machine under a full parallel run will not trip it.
+    /// </summary>
+    public static readonly TimeSpan CallTimeout = TimeSpan.FromSeconds(30);
+
     private readonly McpServer _server;
     private readonly CancellationTokenSource _cts = new();
     private Task _run = Task.CompletedTask;
+
+    private static CancellationToken Deadline() => new CancellationTokenSource(CallTimeout).Token;
 
     public McpClient Client { get; private set; } = null!;
 
@@ -38,13 +47,25 @@ internal sealed class McpTestHost : IAsyncDisposable
         var host = new McpTestHost(server);
         host._run = server.RunAsync(host._cts.Token);
 
-        host.Client = await McpClient.CreateAsync(
-            new StreamClientTransport(clientToServer.Writer.AsStream(), serverToClient.Reader.AsStream()));
+        try
+        {
+            // The handshake was unbounded and unguarded: a server that failed to complete it hung the
+            // suite, and a throw here abandoned the server, its CTS and its run task.
+            host.Client = await McpClient.CreateAsync(
+                new StreamClientTransport(clientToServer.Writer.AsStream(), serverToClient.Reader.AsStream()),
+                cancellationToken: Deadline());
+        }
+        catch
+        {
+            await host.DisposeAsync();
+            throw;
+        }
+
         return host;
     }
 
     public async Task<CallToolResult> CallAsync(string tool, Dictionary<string, object?>? args = null) =>
-        await Client.CallToolAsync(tool, args ?? []);
+        await Client.CallToolAsync(tool, args ?? [], cancellationToken: Deadline());
 
     /// <summary>The payload parsed as JSON, or a throw carrying the server's own error text.</summary>
     public async Task<JsonElement> CallJsonAsync(string tool, Dictionary<string, object?>? args = null)
@@ -61,7 +82,12 @@ internal sealed class McpTestHost : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await Client.DisposeAsync();
+        // Client is null when StartAsync failed before the handshake returned.
+        if (Client is not null)
+        {
+            await Client.DisposeAsync();
+        }
+
         await _cts.CancelAsync();
         try { await _run; } catch (OperationCanceledException) { }
         await _server.DisposeAsync();
