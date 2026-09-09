@@ -2,6 +2,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization.Metadata;
+using MidiRestyle.Core.Analysis;
+using MidiRestyle.Core.Io;
+using MidiRestyle.Core.Mapping;
+using MidiRestyle.Core.Model;
+using MidiRestyle.Core.Scales;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -38,6 +43,54 @@ public class ContractTests
         ("restyle_midi", typeof(RestyleReport)),
         ("export_musicxml", typeof(MusicXmlReport)),
     ];
+
+    /// <summary>
+    /// Every enum whose MEMBER NAMES reach the wire: the four parsed from tool parameters and the four
+    /// echoed into reports. Named explicitly for the same reason <see cref="ReportTypes"/> is.
+    /// </summary>
+    /// <remarks>
+    /// The schema cannot carry these. The parameters are declared as <c>string?</c> so that we, not the
+    /// SDK binder, own the error text, so they serialise as <c>["string","null"]</c> and the accepted
+    /// values appear nowhere in tools.golden.json. RENAMING a member is caught - EnumNamesTests,
+    /// McpJsonTests and RestyleRequestResolverTests all pin wire strings - but ADDING one was silent
+    /// until this golden existed: a new accepted value would ship with nothing recording it. Verified
+    /// by adding a member and watching all 1542 tests stay green.
+    /// </remarks>
+    private static readonly (string Wire, Type Type)[] WireEnums =
+    [
+        ("collisions", typeof(CollisionPolicy)),
+        ("exportFailureReason", typeof(ExportFailureReason)),
+        ("fidelityBadge", typeof(FidelityBadge)),
+        ("format", typeof(MidiFileFormatKind)),
+        ("keyDetectionOutcome", typeof(KeyDetectionOutcome)),
+        ("nonScaleNotes", typeof(NonScaleNotePolicy)),
+        ("range", typeof(RangePolicy)),
+        ("strategy", typeof(MappingStrategy)),
+    ];
+
+    [Fact]
+    public void TheAcceptedAndEchoedEnumValuesMatchTheGolden()
+    {
+        var projection = new JsonObject();
+        foreach ((string wire, Type type) in WireEnums.OrderBy(e => e.Wire, StringComparer.Ordinal))
+        {
+            var values = new JsonArray();
+            foreach (string value in ValidValues(type))
+            {
+                values.Add(value);
+            }
+
+            projection[wire] = values;
+        }
+
+        AssertMatchesFile("enums.golden.json", projection.ToJsonString(Pretty));
+    }
+
+    private static IReadOnlyList<string> ValidValues(Type type) =>
+        (IReadOnlyList<string>)typeof(EnumNames)
+            .GetMethod(nameof(EnumNames.Valid))!
+            .MakeGenericMethod(type)
+            .Invoke(null, null)!;
 
     [Fact]
     public async Task ToolNamesSchemasAndAnnotationsMatchTheGolden()

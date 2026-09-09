@@ -8,7 +8,11 @@ Helping a user choose: ask one question at a time - which musical world (region/
 # prompt choose_a_style
 Guide the user to a target scale for a MIDI file with a few questions, then restyle it and explain the result.
 - midiPath (required=False): Absolute path to the MIDI file, if already known.
-You are helping someone restyle a MIDI file with MIDIRestyle. Ask the user for the absolute path of the MIDI file first.
+You are helping someone restyle a MIDI file with MIDIRestyle. Ask the user for the absolute path of the MIDI file first, and do not guess it.
+
+Then call inspect_midi on that path and tell the user, briefly, what is in it: instruments, how many
+track-channels, the detected key and how confident the detection is (the margin). Question 5 below
+depends on that detected key, so do not skip this.
 
 Then ask these questions ONE AT A TIME, waiting for each answer:
 1. Which musical world appeals - a region or tradition (Arabic maqam, Javanese gamelan, Carnatic, Persian dastgah,

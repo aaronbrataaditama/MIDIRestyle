@@ -74,6 +74,8 @@ public partial class StylePromptsTests
 
         string text = TextOf(result);
         text.Should().Contain("absolute path", "the script has to open by asking for the file");
+        NamesIn(text).Should().Contain("inspect_midi",
+            "the cold-start branch is how most agents arrive, and it used to skip inspection entirely - leaving question 5 leaning on a key it never fetched");
         text.Should().NotContain("inspect_midi on \"", "no blank path is interpolated into an opening call");
         NamesIn(text).Should().Contain("list_scales", "the questions still have to land on a tool");
     }
@@ -82,7 +84,10 @@ public partial class StylePromptsTests
     public void ServerInstructionsFitTheBudget()
     {
         Encoding.UTF8.GetByteCount(StylePrompts.ServerInstructions).Should().BeLessThanOrEqualTo(1536);
-        StylePrompts.ServerInstructions.Should().ContainAll("inspect_midi", "list_scales", "restyle_midi");
+        // All FIVE, not three. Pinning a subset let describe_scale and export_musicxml be removed from
+        // the instructions with every StylePromptsTests case still green.
+        StylePrompts.ServerInstructions.Should().ContainAll(
+            "inspect_midi", "list_scales", "describe_scale", "restyle_midi", "export_musicxml");
     }
 
     /// <summary>

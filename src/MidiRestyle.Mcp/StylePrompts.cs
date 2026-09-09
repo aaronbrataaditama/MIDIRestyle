@@ -37,13 +37,21 @@ public sealed class StylePrompts
     public static string ChooseAStyle(
         [Description("Absolute path to the MIDI file, if already known.")] string? midiPath = null)
     {
+        // Both branches must name inspect_midi. The cold-start branch - the plain /choose_a_style slash
+        // command, which is how most agents will arrive - used to say only "ask for the path", so the
+        // agent skipped inspection entirely and question 5 below leaned on a detected key it had never
+        // fetched.
+        string target = string.IsNullOrWhiteSpace(midiPath) ? "that path" : $"\"{midiPath}\"";
         string opening = string.IsNullOrWhiteSpace(midiPath)
-            ? "Ask the user for the absolute path of the MIDI file first."
-            : $"Start by calling inspect_midi on \"{midiPath}\" and tell the user, briefly, what is in it: instruments, " +
-              "how many track-channels, the detected key and how confident the detection is (the margin).";
+            ? "Ask the user for the absolute path of the MIDI file first, and do not guess it."
+            : "You already have the path.";
 
         return $"""
             You are helping someone restyle a MIDI file with MIDIRestyle. {opening}
+
+            Then call inspect_midi on {target} and tell the user, briefly, what is in it: instruments, how many
+            track-channels, the detected key and how confident the detection is (the margin). Question 5 below
+            depends on that detected key, so do not skip this.
 
             Then ask these questions ONE AT A TIME, waiting for each answer:
             1. Which musical world appeals - a region or tradition (Arabic maqam, Javanese gamelan, Carnatic, Persian dastgah,
