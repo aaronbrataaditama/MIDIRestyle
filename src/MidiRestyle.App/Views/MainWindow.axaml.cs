@@ -740,6 +740,18 @@ public partial class MainWindow : Window
 
     // ---- Help menu ---------------------------------------------------------------------------
 
+    /// <summary>
+    /// Shows the ready-to-paste MCP configuration for this exe.
+    /// </summary>
+    /// <remarks>
+    /// Sits in Help rather than in a settings page because it configures something outside this
+    /// application: the exe already answers --mcp whether or not anyone opens this window, so there
+    /// is nothing here to switch on. It is above About with a separator, so the Help menu reads as
+    /// "how to drive this from an agent" and then "what this is".
+    /// </remarks>
+    private async void OnAgentAccessClicked(object? sender, RoutedEventArgs e) =>
+        await new AgentAccessWindow().ShowDialog(this).ConfigureAwait(true);
+
     private async void OnAboutClicked(object? sender, RoutedEventArgs e) =>
         await new AboutWindow().ShowDialog(this).ConfigureAwait(true);
 
