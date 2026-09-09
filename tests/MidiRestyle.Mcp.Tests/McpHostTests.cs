@@ -23,7 +23,7 @@ public class McpHostTests
         host.Client.ServerInfo.Version.Should().Be("0.0.0-test", "the version is passed in, never restated here");
         host.Client.ServerInstructions.Should().Be(StylePrompts.ServerInstructions);
         host.Client.ServerCapabilities.Tools.Should().NotBeNull();
-        host.Client.ServerCapabilities.Prompts.Should().NotBeNull("prompts are declared before Task 17 fills them in");
+        host.Client.ServerCapabilities.Prompts.Should().NotBeNull("the capability is declared alongside tools, and choose_a_style fills it");
 
         IList<McpClientTool> tools = await host.Client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
         tools.Select(t => t.Name).Should().BeEquivalentTo(
