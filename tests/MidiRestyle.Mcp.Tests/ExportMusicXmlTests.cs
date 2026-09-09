@@ -371,10 +371,18 @@ public sealed class ExportMusicXmlTests : IDisposable
     /// long, every later measure is displaced. Asserted over JITTERED input, because onsets on exact
     /// tick boundaries are the one input class that cannot fail - a span landing on an exact multiple
     /// of a sixty-fourth is always writable, so the decomposer never rounds up.
+    /// <para>
+    /// The jitter has to clear the quantiser's own snap or it is not jitter at all. A sixteenth is
+    /// 120 ticks at this PPQN, so anything under a 60-tick half-step is pulled straight back onto the
+    /// grid: the original 29 produced a score byte-identical to jitter 0, and reintroducing the
+    /// 2026-08-28 Critical (advancing the cursor by the true span rather than the written one) killed
+    /// nothing. 61 clears the half-step and 127 clears a whole sixteenth.
+    /// </para>
     /// </summary>
     [Theory]
     [InlineData(0)]
-    [InlineData(29)]
+    [InlineData(61)]
+    [InlineData(127)]
     public async Task EveryVoiceInTheWrittenFileAccountsForExactlyItsMeasureLength(int jitter)
     {
         await using McpTestHost host = await McpTestHost.StartAsync();
@@ -388,29 +396,53 @@ public sealed class ExportMusicXmlTests : IDisposable
         XDocument document = XDocument.Parse(File.ReadAllText(output));
         document.Descendants("measure").Should().NotBeEmpty();
 
+        var voicesSeen = new HashSet<string>();
+
         foreach (XElement part in document.Descendants("part"))
         {
             foreach (XElement measure in part.Elements("measure"))
             {
+                // Walk the measure exactly as a reader does and record where each voice ENDS. A
+                // high-water mark over the shared cursor cannot see a short voice at all - the
+                // longest voice hides every other one - and "short by one division" is precisely
+                // the half of this invariant that makes readers reject the file.
                 long cursor = 0;
-                long high = 0;
+                var ends = new Dictionary<string, long>();
 
                 foreach (XElement element in measure.Elements())
                 {
                     long value = long.TryParse(element.Element("duration")?.Value ?? element.Value, out long parsed) ? parsed : 0;
-                    cursor += element.Name.LocalName switch
+
+                    switch (element.Name.LocalName)
                     {
-                        "note" when element.Element("chord") is null => value,
-                        "backup" => -value,
-                        "forward" => value,
-                        _ => 0,
-                    };
-                    high = Math.Max(high, cursor);
+                        case "note" when element.Element("chord") is null:
+                            cursor += value;
+                            ends[element.Element("voice")?.Value ?? "1"] = cursor;
+                            break;
+                        case "backup":
+                            cursor -= value;
+                            break;
+                        case "forward":
+                            cursor += value;
+                            break;
+                    }
                 }
 
-                high.Should().Be(4 * Ppqn, $"measure {measure.Attribute("number")?.Value} is 4/4 at {Ppqn} divisions");
+                string number = measure.Attribute("number")?.Value ?? "?";
+                ends.Should().NotBeEmpty($"measure {number} must carry at least one voice");
+
+                foreach ((string voice, long end) in ends)
+                {
+                    end.Should().Be(
+                        4 * Ppqn,
+                        $"voice {voice} of measure {number} must account for exactly its 4/4 measure at {Ppqn} divisions");
+                    voicesSeen.Add(voice);
+                }
             }
         }
+
+        voicesSeen.Count.Should().BeGreaterThan(
+            1, "the grand-staff fixture has to exercise more than one voice, or a per-voice assertion proves nothing a single shared cursor would not");
     }
 
     /// <summary>
@@ -425,7 +457,11 @@ public sealed class ExportMusicXmlTests : IDisposable
         string input = WritePiano("accidentals.mid");
         string output = Path.Combine(_dir, "accidentals.musicxml");
 
+        // The JUST tuning, deliberately. Tempered Rast's degrees are all multiples of 50 cents, so
+        // the quantised half-accidental is already exact and "the residual is dropped" cannot fail
+        // on it. The just tuning's 203.91 and 354.547 carry a real comma for the exporter to drop.
         await host.CallJsonAsync("export_musicxml", Args(input,
+            ("targetScaleId", "middleeast.arabic.maqam-rast-just-arab"),
             ("targetTonic", "C4"), ("sourceScaleId", "europe.churchmodes.ionian"), ("sourceTonic", "C4"),
             ("outputPath", output)));
 

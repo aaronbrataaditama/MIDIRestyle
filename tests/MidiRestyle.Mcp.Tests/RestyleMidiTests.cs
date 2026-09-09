@@ -241,6 +241,32 @@ public sealed class RestyleMidiTests : IDisposable
         Directory.GetFiles(_dir, "*.tmp-*").Should().BeEmpty();
     }
 
+    /// <summary>
+    /// A trailing separator is TRIMMED, not refused - `out.mid\` writes the file `out.mid`. This is
+    /// Win32's own reading of the string (`Path.GetFullPath` trims it) and it changed silently when
+    /// validation moved onto the resolved form: the raw string `out.mid\` used to fail the extension
+    /// check and be refused. Pinned deliberately rather than left to Task 18's golden to discover,
+    /// because a trailing separator conventionally denotes a directory and an agent could reasonably
+    /// have expected the refusal instead. If that reading is ever preferred, this test is the place
+    /// the decision is recorded.
+    /// </summary>
+    [Fact]
+    public async Task ATrailingSeparatorIsTrimmedRatherThanRefused()
+    {
+        await using McpTestHost host = await McpTestHost.StartAsync();
+        string input = Major();
+
+        string canonical = Path.Combine(_dir, "trailing.mid");
+
+        JsonElement report = await host.CallJsonAsync(
+            "restyle_midi", Args(input, ("outputPath", canonical + Path.DirectorySeparatorChar)));
+
+        report.TryGetProperty("error", out _).Should().BeFalse("Win32 resolves the trailing separator away, so the path is usable");
+        report.GetProperty("outputPath").GetString().Should().Be(canonical, "the separator is trimmed by the single canonicalisation");
+        File.Exists(canonical).Should().BeTrue();
+        Directory.GetFiles(_dir, "*.tmp-*").Should().BeEmpty();
+    }
+
     [Fact]
     public async Task RefusedExtensionsAndMissingDirectoriesAreErrors()
     {
