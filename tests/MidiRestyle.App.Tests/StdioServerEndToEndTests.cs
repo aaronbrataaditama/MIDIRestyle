@@ -165,12 +165,31 @@ public sealed class StdioServerEndToEndTests : IDisposable
 
         await stdin.WriteAsync("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"e2e","version":"0"}}}""" + "\n");
         string init = await ReadUntil("\"id\":1", TimeSpan.FromSeconds(60));
-        init.Should().Contain(McpHostServerName).And.Contain(AppVersion.Display);
+
+        // Read serverInfo out of the envelope rather than substring-matching the line. The line also
+        // carries `instructions`, and ServerInstructions opens with the literal word "MIDIRestyle" -
+        // so `init.Should().Contain(McpHostServerName)` stayed green when ServerName was renamed to
+        // "Restyler", proving nothing about serverInfo at all.
+        JsonElement serverInfo = JsonDocument.Parse(init).RootElement
+            .GetProperty("result").GetProperty("serverInfo");
+        serverInfo.GetProperty("name").GetString().Should().Be(McpHostServerName, "serverInfo.name is what a host displays");
+        serverInfo.GetProperty("version").GetString().Should().Be(AppVersion.Display, "and the version it reports is the app's");
 
         await stdin.WriteAsync("""{"jsonrpc":"2.0","method":"notifications/initialized"}""" + "\n");
         await stdin.WriteAsync("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}""" + "\n");
         string tools = await ReadUntil("\"id\":2", TimeSpan.FromSeconds(60));
-        tools.Should().ContainAll("list_scales", "describe_scale", "inspect_midi", "restyle_midi", "export_musicxml");
+
+        // The exact set of tools[].name, not a substring sweep of the line. Every tool name is
+        // cross-referenced inside OTHER tools' descriptions - 18 occurrences across the five - so
+        // ContainAll stayed green when describe_scale was renamed out of existence.
+        string[] served = [.. JsonDocument.Parse(tools).RootElement
+            .GetProperty("result").GetProperty("tools").EnumerateArray()
+            .Select(t => t.GetProperty("name").GetString()!)
+            .OrderBy(name => name, StringComparer.Ordinal)];
+
+        served.Should().Equal(
+            ["describe_scale", "export_musicxml", "inspect_midi", "list_scales", "restyle_midi"],
+            "the served set is the contract, and a renamed or dropped tool must redden here");
 
         stdin.Close();
         (await ExitedWithin(process, TimeSpan.FromSeconds(15)))

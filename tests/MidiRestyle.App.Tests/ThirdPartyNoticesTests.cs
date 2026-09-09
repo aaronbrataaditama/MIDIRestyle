@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using MidiRestyle.App.Services;
 
 namespace MidiRestyle.App.Tests;
@@ -93,6 +94,53 @@ public class ThirdPartyNoticesTests
     public void EveryRedistributedComponentIsNamed(string component)
     {
         ThirdPartyNotices.Text.Should().Contain(component);
+    }
+
+    /// <summary>
+    /// The companion to <see cref="EveryRedistributedComponentIsNamed"/>, and the half that was
+    /// missing: that one is a hand-written allowlist, so it can only catch a component being
+    /// REMOVED from the notices. It is structurally incapable of catching one being ADDED to the
+    /// build, which is the drift CLAUDE.md warns a new package causes.
+    /// </summary>
+    /// <remarks>
+    /// It happened. Task 19's ProjectReference to MidiRestyle.Mcp widened the shipped set by twelve
+    /// assemblies - ModelContextProtocol x2 (Apache-2.0, not MIT) and Microsoft.Extensions.* x10 -
+    /// and every notices test stayed green. The App's own dependency manifest is the authority here,
+    /// not the package list: it names exactly the libraries that carry code. Avalonia ships as a
+    /// dozen assemblies from one project under one licence, so a library also counts as named when
+    /// its root package is.
+    /// </remarks>
+    [Fact]
+    public void EveryLibraryTheAppShipsIsNamedInTheNotices()
+    {
+        string manifest = Path.Combine(AppContext.BaseDirectory, "MIDIRestyle.deps.json");
+        File.Exists(manifest).Should().BeTrue("the App ProjectReference copies its dependency manifest beside the exe");
+
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(manifest));
+        var shipped = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (JsonProperty target in document.RootElement.GetProperty("targets").EnumerateObject())
+        {
+            foreach (JsonProperty library in target.Value.EnumerateObject())
+            {
+                if (library.Value.TryGetProperty("runtime", out _) || library.Value.TryGetProperty("native", out _))
+                {
+                    shipped.Add(library.Name.Split('/')[0]);
+                }
+            }
+        }
+
+        // Without this the assertion below passes by iterating nothing, which is how eight
+        // cannot-fail assertions reached this branch.
+        shipped.Should().HaveCountGreaterThan(20, "a manifest this small means the parse changed, not the app");
+
+        string notices = ThirdPartyNotices.Text;
+        List<string> unnamed = [.. shipped
+            .Where(name => !name.StartsWith("MidiRestyle", StringComparison.Ordinal) && name != "MIDIRestyle")
+            .Where(name => !notices.Contains(name, StringComparison.Ordinal)
+                        && !notices.Contains(name.Split('.')[0], StringComparison.Ordinal))];
+
+        unnamed.Should().BeEmpty(
+            "every library the exe redistributes must be named in the notices - read its real licence out of the package, never from memory");
     }
 
     /// <summary>
