@@ -1,0 +1,206 @@
+{
+  "list_scales": {
+    "totalMatches": "integer",
+    "offset": "integer",
+    "truncated": "boolean",
+    "scales": [
+      {
+        "id": "string",
+        "name": "string",
+        "tradition": "string",
+        "region": "string",
+        "degreeCount": "integer",
+        "notatable": "boolean",
+        "fitsTwelveTet": "boolean",
+        "maxDeviationCents?": "number",
+        "fidelityBadge": "string",
+        "third": "string"
+      }
+    ]
+  },
+  "describe_scale": {
+    "summary": {
+      "id": "string",
+      "name": "string",
+      "tradition": "string",
+      "region": "string",
+      "degreeCount": "integer",
+      "notatable": "boolean",
+      "fitsTwelveTet": "boolean",
+      "maxDeviationCents?": "number",
+      "fidelityBadge": "string",
+      "third": "string"
+    },
+    "description?": "string",
+    "source": "string",
+    "degreeCents": [
+      "number"
+    ],
+    "degreeOffsets": [
+      "number"
+    ],
+    "spellingOnC?": [
+      "string"
+    ],
+    "notatableReason?": "string",
+    "fidelity": {
+      "badge": "string",
+      "maxDeviationCents?": "number",
+      "worstDegreeIndex": "integer"
+    },
+    "bendClustersAtDefaultTolerance": "integer",
+    "origin": "string"
+  },
+  "inspect_midi": {
+    "path": "string",
+    "format": "string",
+    "division": "string",
+    "ticksPerQuarterNote?": "integer",
+    "durationTicks": "integer",
+    "durationSeconds?": "number",
+    "title?": "string",
+    "initialTempoBpm?": "number",
+    "timeSignatures": [
+      {
+        "ticks": "integer",
+        "numerator": "integer",
+        "denominator": "integer"
+      }
+    ],
+    "tracks": [
+      {
+        "track": "integer",
+        "channel": "integer",
+        "name?": "string",
+        "instrument?": "string",
+        "noteCount": "integer",
+        "isDrums": "boolean",
+        "restylable": "boolean",
+        "hasPitchBend": "boolean",
+        "lowestMidi?": "integer",
+        "highestMidi?": "integer"
+      }
+    ],
+    "totalNotes": "integer",
+    "restylableNoteCount": "integer",
+    "key": {
+      "outcome": "string",
+      "candidates": [
+        {
+          "tonic": "string",
+          "mode": "string",
+          "r": "number",
+          "margin": "number"
+        }
+      ],
+      "isAmbiguous": "boolean",
+      "suggestedSourceScaleId?": "string"
+    }
+  },
+  "restyle_midi": {
+    "outputPath": "string",
+    "resolved": {
+      "targetScaleId": "string",
+      "targetTonic": {
+        "name": "string",
+        "midi": "integer"
+      },
+      "sourceScaleId?": "string",
+      "sourceTonic?": {
+        "name": "string",
+        "midi": "integer"
+      },
+      "excluded": [
+        {
+          "track": "integer",
+          "channel": "integer"
+        }
+      ],
+      "mapping": {
+        "strategy": "string",
+        "nonScaleNotes": "string",
+        "collisions": "string",
+        "range": "string"
+      },
+      "toleranceCents": "number",
+      "keyDetectionUsed": "boolean"
+    },
+    "notesRestyled": "integer",
+    "tally": {
+      "droppedOutOfRange": "integer",
+      "droppedNotInScale": "integer",
+      "merged": "integer",
+      "displaced": "integer"
+    },
+    "channels": {
+      "used": "integer",
+      "effectiveToleranceCents": "number",
+      "toleranceWasRaised": "boolean",
+      "worstErrorCents": "number",
+      "muted": [
+        {
+          "track": "integer",
+          "channel": "integer",
+          "noteCount": "integer"
+        }
+      ]
+    },
+    "fidelity": {
+      "badge": "string",
+      "maxDeviationCents?": "number",
+      "worstDegreeIndex": "integer"
+    },
+    "warnings": [
+      "string"
+    ]
+  },
+  "export_musicxml": {
+    "outputPath": "string",
+    "resolved": {
+      "targetScaleId": "string",
+      "targetTonic": {
+        "name": "string",
+        "midi": "integer"
+      },
+      "sourceScaleId?": "string",
+      "sourceTonic?": {
+        "name": "string",
+        "midi": "integer"
+      },
+      "excluded": [
+        {
+          "track": "integer",
+          "channel": "integer"
+        }
+      ],
+      "mapping": {
+        "strategy": "string",
+        "nonScaleNotes": "string",
+        "collisions": "string",
+        "range": "string"
+      },
+      "toleranceCents": "number",
+      "keyDetectionUsed": "boolean"
+    },
+    "measureCount": "integer",
+    "parts": [
+      {
+        "track": "integer",
+        "channel": "integer",
+        "name": "string"
+      }
+    ],
+    "tally": {
+      "droppedOutOfRange": "integer",
+      "droppedNotInScale": "integer",
+      "merged": "integer",
+      "displaced": "integer"
+    },
+    "diagnostics": [
+      "string"
+    ],
+    "warnings": [
+      "string"
+    ]
+  }
+}

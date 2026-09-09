@@ -1,0 +1,84 @@
+# instructions
+MIDIRestyle re-maps a MIDI file's scale into one of ~170 world scales (maqamat, gamelan, Carnatic melakarta, church modes...). Pitch only: rhythm, articulation and drums never change. Microtonal targets are exported with pitch bend on extra channels, exactly as the desktop app does.
+
+Typical flow: inspect_midi (tracks, detected key) -> list_scales with filters -> describe_scale on two or three candidates -> restyle_midi (or export_musicxml when the scale is notatable and the user wants a score). All paths must be absolute. Omitted tonic/source values come from key detection; read the 'resolved' block in the report to see what was used.
+
+Helping a user choose: ask one question at a time - which musical world (region/tradition, or 'surprise me'); brighter or darker (third: major/minor/neutral); must it play on ordinary 12-TET instruments (fitsTwelveTet=true, or a maxDeviationCents they accept); do they need sheet music (notatable=true); how far from the original (degreeCount near the source's 7). Explain a raised tolerance or a muted track in the report - they are budget decisions, not faults.
+
+# prompt choose_a_style
+Guide the user to a target scale for a MIDI file with a few questions, then restyle it and explain the result.
+- midiPath (required=False): Absolute path to the MIDI file, if already known.
+You are helping someone restyle a MIDI file with MIDIRestyle. Ask the user for the absolute path of the MIDI file first.
+
+Then ask these questions ONE AT A TIME, waiting for each answer:
+1. Which musical world appeals - a region or tradition (Arabic maqam, Javanese gamelan, Carnatic, Persian dastgah,
+   Turkish makam, West African, Western modes...) - or "surprise me"? -> list_scales region/tradition/query.
+2. Brighter, darker, or somewhere in between? -> third = major / minor / neutral.
+3. Must it play on ordinary 12-TET instruments (piano, guitar, most VSTs)? -> fitsTwelveTet=true, or ask what
+   deviation in cents they would accept and pass maxDeviationCents. Otherwise leave both unset.
+4. Do they need sheet music? -> notatable=true (only scales the staff speller can write).
+5. How far from the original? Close: degreeCount equal to the source's (7 for a major/minor piece). Bold: 5 or 6.
+
+Call list_scales with those filters. Pick three candidates and call describe_scale on each. Present them with:
+the scale's name and tradition, its source citation, what its deviation from 12-TET will sound like (quarter-tones,
+neutral thirds, equal steps), and how many pitch-bend channels it costs. Let the user choose.
+
+Then call restyle_midi (or export_musicxml if they asked for a score and the scale is notatable). Explain the report:
+the 'resolved' block (which tonic and source scale were used, and whether key detection chose them), the tally
+(dropped or merged notes), and the channel report - if the tolerance was raised or a track was muted, say that
+the channel budget forced it and offer to exclude a track or accept the raised tolerance. Name the output path.
+
+# tool describe_scale
+Full detail for one scale: degrees in cents, per-degree deviation from 12-TET, staff spelling if any, source citation, and how many pitch-bend channels it costs.
+- scaleId: Scale id as returned by list_scales (case-insensitive).
+
+# tool export_musicxml
+Restyle a MIDI file and write the result as a MusicXML score (.musicxml or .xml) that notation software can open. Only for target scales that can be written on a staff - check list_scales' notatable flag; a scale that cannot be spelled is refused, and restyle_midi produces a playable .mid for it instead. Same parameters as restyle_midi, plus detectTuplets. Overwrites an existing output only when overwrite is true.
+- collisions: When two notes map to one pitch: merge (default) or displaceOctave.
+- detectTuplets: Detect triplets and sextuplets when quantising rhythm (default true). Off, triplet material is spelled as the nearest straight value.
+- exclude: Track-channels to leave untouched, as {track, channel} pairs from inspect_midi. Drums (channel 9) are never notated.
+- inputPath: Absolute path to the source .mid file.
+- nonScaleNotes: What to do with notes outside the source scale: snapToNearestSourceDegree (default), passThrough, drop.
+- outputPath: Absolute output path ending in .musicxml or .xml. Default: beside the input as <name>.<scaleId>.musicxml.
+- overwrite: Replace an existing output file (default false).
+- range: When a mapped note leaves MIDI range: shiftIntoRange (default), foldOctave, drop.
+- sourceScaleId: Source scale id. Default: ionian or aeolian per the detected key. Unused under strategy nearestPitch.
+- sourceTonic: Source tonic, same forms as targetTonic. Default: detected key's tonic.
+- strategy: scaleDegree (default) maps degree to degree; nearestPitch snaps each note to the nearest target pitch.
+- targetScaleId: Target scale id from list_scales; must be one list_scales reports as notatable.
+- targetTonic: Target tonic: note name with optional accidental and octave (D, Eb4, F#3) or MIDI number as a string. Default: detected key's tonic at octave 4.
+- toleranceCents: Pitch-bend clustering tolerance in cents, 0.5..50 (default 5). Affects the restyle, not the engraving.
+
+# tool inspect_midi
+Read a MIDI file without changing it: format, tempo, time signatures, one row per track-channel (the unit restyle_midi's exclude parameter addresses), and key detection with the source scale it implies. Call this before restyle_midi to choose a tonic and decide what to exclude.
+- inputPath: Absolute path to the .mid file.
+
+# tool list_scales
+Search and filter the ~170 world scales MIDIRestyle can restyle into. Filters combine with AND. Returns a page of compact summaries; call describe_scale for one scale's full detail.
+- degreeCount: Number of degrees per octave.
+- fitsTwelveTet: true: only scales an ordinary 12-TET instrument plays within 5 cents; false: only microtonal scales.
+- limit: Page size 1..200 (default 50).
+- maxDeviationCents: Keep scales whose largest deviation from 12-TET is at most this many cents.
+- notatable: true: only scales that can be written on a staff (the speller succeeds); false: only those that cannot.
+- offset: Matches to skip (default 0).
+- query: Free-text search over name, tradition, region and id; every whitespace-separated term must match.
+- region: Exact region, case-insensitive, e.g. 'Middle East'.
+- third: Quality of the scale's third: major, minor, neutral or none.
+- tradition: Exact tradition, case-insensitive, e.g. 'Arabic maqam'.
+
+# tool restyle_midi
+Re-map a MIDI file's pitches from its source scale into a target scale and write a new .mid. Microtonal targets use pitch bend on extra channels, exactly as the desktop app exports. Overwrites an existing output only when overwrite is true. Rhythm, articulation and drums are never changed. Omitted tonic/source values are taken from key detection; the report's 'resolved' block says what was used.
+- collisions: When two notes map to one pitch: merge (default) or displaceOctave.
+- exclude: Track-channels to leave untouched, as {track, channel} pairs from inspect_midi. Drums (channel 9) are always left untouched.
+- inputPath: Absolute path to the source .mid file.
+- nonScaleNotes: What to do with notes outside the source scale: snapToNearestSourceDegree (default), passThrough, drop.
+- outputPath: Absolute output path ending in .mid or .midi. Default: beside the input as <name>.<scaleId>.mid.
+- overwrite: Replace an existing output file (default false).
+- range: When a mapped note leaves MIDI range: shiftIntoRange (default), foldOctave, drop.
+- sourceScaleId: Source scale id. Default: ionian or aeolian per the detected key. Unused under strategy nearestPitch.
+- sourceTonic: Source tonic, same forms as targetTonic. Default: detected key's tonic.
+- strategy: scaleDegree (default) maps degree to degree; nearestPitch snaps each note to the nearest target pitch.
+- targetScaleId: Target scale id from list_scales.
+- targetTonic: Target tonic: note name with optional accidental and octave (D, Eb4, F#3) or MIDI number as a string. Default: detected key's tonic at octave 4.
+- toleranceCents: Pitch-bend clustering tolerance in cents, 0.5..50 (default 5). Raised automatically if the channel budget does not fit; the report says so.
+

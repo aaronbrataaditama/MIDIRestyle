@@ -76,6 +76,43 @@ public sealed class ExportMusicXmlTests : IDisposable
         return path;
     }
 
+    /// <summary>
+    /// Two note-carrying chunks in one Format 1 file, each on its own channel and free to share a
+    /// name. Track indices follow the file's chunk order, so the conductor chunk is track 0 and these
+    /// two are 1 and 2 - deliberately different from their channels, so a track/channel transposition
+    /// in the report cannot pass.
+    /// </summary>
+    private string WriteTwoTracks(string file, string firstName, string secondName, int firstChannel, int secondChannel)
+    {
+        string path = Path.Combine(_dir, file);
+        var conductor = new TrackChunk(new TimeSignatureEvent(4, 4), new SetTempoEvent(500_000));
+
+        TrackChunk Voice(string name, int channel, int midi)
+        {
+            var chunk = new TrackChunk(new SequenceTrackNameEvent(name));
+            using (TimedObjectsManager<Note> manager = chunk.ManageNotes())
+            {
+                for (int bar = 0; bar < 2; bar++)
+                {
+                    manager.Objects.Add(new Note((SevenBitNumber)midi, 480, bar * 1920L)
+                    {
+                        Channel = (FourBitNumber)channel,
+                        Velocity = (SevenBitNumber)90,
+                    });
+                }
+            }
+
+            return chunk;
+        }
+
+        var midiFile = new MidiFile(conductor, Voice(firstName, firstChannel, 60), Voice(secondName, secondChannel, 67))
+        {
+            TimeDivision = new TicksPerQuarterNoteTimeDivision(Ppqn),
+        };
+        midiFile.Write(path, overwriteFile: true, format: MidiFileFormat.MultiTrack);
+        return path;
+    }
+
     /// <summary>Both hands of a keyboard part: a chord, a tie over a barline, triplets, a bass line.</summary>
     private string WritePiano(string file, int jitter = 0) => WriteTrack(file, "Piano", program: 0,
         [
@@ -167,7 +204,7 @@ public sealed class ExportMusicXmlTests : IDisposable
         JsonElement report = await host.CallJsonAsync("export_musicxml", Args(input,
             ("targetTonic", "C4"), ("strategy", "nearestPitch"), ("sourceScaleId", "europe.churchmodes.ionian")));
 
-        string[] parts = [.. report.GetProperty("parts").EnumerateArray().Select(p => p.GetString()!)];
+        string[] parts = [.. report.GetProperty("parts").EnumerateArray().Select(p => p.GetProperty("name").GetString()!)];
         string[] diagnostics = [.. report.GetProperty("diagnostics").EnumerateArray().Select(d => d.GetString()!)];
         string[] warnings = [.. report.GetProperty("warnings").EnumerateArray().Select(w => w.GetString()!)];
 
@@ -199,15 +236,19 @@ public sealed class ExportMusicXmlTests : IDisposable
             ("targetTonic", "C4"), ("sourceScaleId", "europe.churchmodes.ionian"), ("sourceTonic", "C4")));
 
         report.GetProperty("measureCount").GetInt32().Should().Be(3, "three 4/4 bars carry the three notes");
-        report.GetProperty("parts").EnumerateArray().Select(p => p.GetString()).Should().Equal(["Lead"]);
+        report.GetProperty("parts").EnumerateArray().Select(p => p.GetProperty("name").GetString()).Should().Equal(["Lead"]);
     }
 
     /// <summary>
-    /// Notes the restyle lost are named in the report rather than left for the agent to notice by
-    /// counting noteheads. The score is still written - the warning is how the loss is surfaced.
+    /// Notes the restyle lost are counted in the report rather than left for the agent to notice by
+    /// counting noteheads, and they are counted in the same structured <c>tally</c> block
+    /// <c>restyle_midi</c> carries - an agent that has learned to read one report can read the other.
+    /// The prose line stays in <c>warnings</c> alongside it, exactly as on <c>restyle_midi</c>; what
+    /// is asserted here is the block, so this test does not break when Core rewords its summary.
+    /// The score is still written - a lossy restyle is reported, not refused.
     /// </summary>
     [Fact]
-    public async Task NotesLostInTheRestyleAreReportedAsAWarning()
+    public async Task NotesLostInTheRestyleAreCountedInTheTally()
     {
         await using McpTestHost host = await McpTestHost.StartAsync();
         string input = WriteTrack("lossy.mid", "Lead", program: null,
@@ -218,9 +259,83 @@ public sealed class ExportMusicXmlTests : IDisposable
             ("targetTonic", "C4"), ("sourceScaleId", "europe.churchmodes.ionian"), ("sourceTonic", "C4"),
             ("nonScaleNotes", "drop"), ("outputPath", output)));
 
-        report.GetProperty("warnings").EnumerateArray().Select(w => w.GetString())
-            .Should().Contain(w => w!.Contains("3 dropped (not in source scale)", StringComparison.Ordinal));
+        JsonElement tally = report.GetProperty("tally");
+        tally.GetProperty("droppedNotInScale").GetInt32().Should().Be(3, "C#4, D#4 and F#4 are not in C ionian");
+        tally.GetProperty("droppedOutOfRange").GetInt32().Should().Be(0, "nothing here leaves MIDI range");
+        tally.GetProperty("merged").GetInt32().Should().Be(0);
+        tally.GetProperty("displaced").GetInt32().Should().Be(0);
+
+        report.GetProperty("warnings").EnumerateArray().Should().NotBeEmpty("the loss is also said in prose");
         File.Exists(output).Should().BeTrue("a lossy restyle still produces a score");
+    }
+
+    /// <summary>
+    /// The two collision counters, each nonzero in exactly one of the two runs, so neither can be a
+    /// constant and neither can stand in for the other. A run uses one collision policy or the other
+    /// and never both, which is why the drops above cannot pin these two.
+    /// </summary>
+    [Fact]
+    public async Task MergedAndDisplacedAreCountedUnderTheirOwnPoliciesHereToo()
+    {
+        await using McpTestHost host = await McpTestHost.StartAsync();
+        // Eb4 and E4 are 300c and 400c above a C4 tonic, and Rast's nearest degree to both is its
+        // neutral third at 350c - so the two land on one pitch at one instant, which is the whole of
+        // what a collision is.
+        string input = WriteTrack("collide.mid", "Lead", program: null, [(0, 480, 63), (0, 480, 64)]);
+
+        JsonElement merge = await host.CallJsonAsync("export_musicxml", Args(input,
+            ("targetTonic", "C4"), ("strategy", "nearestPitch"),
+            ("collisions", "merge"), ("outputPath", Path.Combine(_dir, "merge.musicxml"))));
+
+        merge.GetProperty("tally").GetProperty("merged").GetInt32().Should().Be(1, "E4 snaps onto the neutral third Eb4 already sounds");
+        merge.GetProperty("tally").GetProperty("displaced").GetInt32().Should().Be(0);
+
+        JsonElement displace = await host.CallJsonAsync("export_musicxml", Args(input,
+            ("targetTonic", "C4"), ("strategy", "nearestPitch"),
+            ("collisions", "displaceOctave"), ("outputPath", Path.Combine(_dir, "displace.musicxml"))));
+
+        displace.GetProperty("tally").GetProperty("displaced").GetInt32().Should().Be(1);
+        displace.GetProperty("tally").GetProperty("merged").GetInt32().Should().Be(0);
+    }
+
+    /// <summary>
+    /// A part is identified, not merely named. Two tracks may carry the same display name - and a
+    /// Format 0 file's per-channel pseudo-tracks share a track index as well - so a bare name gives
+    /// an agent no way to say which row of <c>inspect_midi</c>'s track list a part came from, nor
+    /// which <c>exclude</c> entry would remove it. Track and channel are adjacent ints and would
+    /// transpose silently, so the fixture gives every row a track index its channel cannot equal.
+    /// </summary>
+    [Fact]
+    public async Task EachPartNamesTheTrackAndChannelItCameFrom()
+    {
+        await using McpTestHost host = await McpTestHost.StartAsync();
+        string input = WriteTwoTracks("twins.mid", "Twin", "Twin", firstChannel: 0, secondChannel: 3);
+
+        JsonElement report = await host.CallJsonAsync("export_musicxml", Args(input,
+            ("targetTonic", "C4"), ("sourceScaleId", "europe.churchmodes.ionian"), ("sourceTonic", "C4")));
+
+        (int Track, int Channel, string Name)[] parts =
+        [
+            .. report.GetProperty("parts").EnumerateArray().Select(p =>
+                (p.GetProperty("track").GetInt32(), p.GetProperty("channel").GetInt32(), p.GetProperty("name").GetString()!)),
+        ];
+
+        parts.Should().Equal([(1, 0, "Twin"), (2, 3, "Twin")],
+            "two identically named parts are told apart by the track-channel they came from");
+
+        // ...and those pairs are the ones inspect_midi reports, or the correlation the pair exists
+        // for does not hold.
+        JsonElement inspection = await host.CallJsonAsync("inspect_midi", new() { ["inputPath"] = input });
+        (int, int)[] rows =
+        [
+            .. inspection.GetProperty("tracks").EnumerateArray()
+                .Select(t => (t.GetProperty("track").GetInt32(), t.GetProperty("channel").GetInt32())),
+        ];
+
+        foreach ((int track, int channel, string _) in parts)
+        {
+            rows.Should().Contain((track, channel), "a part must name a row an agent can find in inspect_midi");
+        }
     }
 
     // ---------------------------------------------------------------------------------------------

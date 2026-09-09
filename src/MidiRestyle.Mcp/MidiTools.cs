@@ -228,7 +228,7 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
 
         NotationScore score;
         byte[] bytes;
-        string? tally;
+        RestyleTally tally;
         try
         {
             RestyleResult result = RestyleEngine.Restyle(resolution.Project, resolution.Settings);
@@ -239,7 +239,7 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
                 QuantiseOptions.Default with { DetectTuplets = detectTuplets });
 
             bytes = Utf8NoBom.GetBytes(MusicXmlExporter.ToXml(score));
-            tally = result.Tally.Describe();
+            tally = result.Tally;
         }
         catch (Exception ex) when (ex is MusicXmlExportException or InvalidOperationException or NotSupportedException)
         {
@@ -258,7 +258,7 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
         }
 
         var warnings = new List<string>(resolution.Warnings);
-        if (tally is not null) { warnings.Add(tally); }
+        if (tally.Describe() is { } lost) { warnings.Add(lost); }
 
         // No channel report: pitch bend and the channel budget belong to playback and to .mid export.
         // A staff has neither, so reporting one here would describe a plan this call never made.
@@ -266,7 +266,8 @@ public sealed class MidiTools(ScaleLibrary library, PathProbe probe)
             output,
             resolution.Resolved,
             score.MeasureCount,
-            [.. score.Parts.Select(p => p.Name)],
+            [.. score.Parts.Select(p => new PartSummary(p.TrackIndex, p.Channel, p.Name))],
+            new TallyReport(tally.DroppedOutOfRange, tally.DroppedNotInScale, tally.Merged, tally.Displaced),
             score.Diagnostics,
             warnings));
     }

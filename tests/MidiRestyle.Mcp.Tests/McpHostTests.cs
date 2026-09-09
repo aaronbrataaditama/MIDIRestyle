@@ -9,6 +9,8 @@ using ModelContextProtocol.Server;
 
 namespace MidiRestyle.Mcp.Tests;
 
+// Shares a collection with StderrLoggerFactoryTests: both redirect the process-wide Console.Out.
+[Collection(ConsoleCollection.Name)]
 public class McpHostTests
 {
     private static McpServerOptions Build() =>
@@ -90,6 +92,75 @@ public class McpHostTests
         CallToolResult echoed = await host.CallAsync("enum_probe", new() { ["origin"] = "besideExe" });
         echoed.IsError.Should().NotBe(true, "the camelCase name our options define must bind");
         ToolResults.TextOf(echoed).Should().Be("BesideExe");
+    }
+
+    /// <summary>
+    /// The one decision the exe's entry point makes before Avalonia starts. Only a leading switch
+    /// counts: a file path, no arguments at all, or a switch in any other position is the desktop app
+    /// being launched normally, and must reach Avalonia untouched.
+    /// </summary>
+    [Theory]
+    [InlineData(new string[0], false)]
+    [InlineData(new[] { "tune.mid" }, false)]
+    [InlineData(new[] { "--mcp" }, true)]
+    [InlineData(new[] { "--version" }, true)]
+    [InlineData(new[] { "--mcp", "extra" }, true)]
+    [InlineData(new[] { "--MCP" }, false)]
+    [InlineData(new[] { "-mcp" }, false)]
+    [InlineData(new[] { "--mcp-server" }, false)]
+    [InlineData(new[] { "x", "--mcp" }, false)]
+    [InlineData(new[] { "", "--mcp" }, false)]
+    public void OnlyALeadingMcpOrVersionSwitchIsACliInvocation(string[] args, bool expected)
+    {
+        McpHost.IsCliInvocation(args).Should().Be(expected);
+    }
+
+    /// <summary>
+    /// <c>--version</c> is for scripts and for the end-to-end test that proves the exe answers at all,
+    /// so it writes the version and nothing else: no banner, no trailing prose, and a bare "\n" rather
+    /// than the platform's line ending, so a caller on either platform can compare the whole of stdout.
+    /// </summary>
+    [Fact]
+    public void VersionPrintsNothingButTheDisplayVersionAndExitsZero()
+    {
+        TextWriter saved = Console.Out;
+        var buffer = new StringWriter();
+        int exit;
+        try
+        {
+            Console.SetOut(buffer);
+            exit = McpHost.RunCli(["--version"], "9.8.7");
+        }
+        finally
+        {
+            Console.SetOut(saved);
+        }
+
+        exit.Should().Be(0);
+        buffer.ToString().Should().Be("9.8.7\n", "the version is passed in, and stdout carries it alone");
+    }
+
+    /// <summary>
+    /// The version is whatever the caller passes, never restated inside the host - the same rule
+    /// <see cref="TheServerIntroducesItselfAndAdvertisesItsTools"/> pins for the server handshake. A
+    /// second value would let the About box and the command line disagree about what was built.
+    /// </summary>
+    [Fact]
+    public void VersionEchoesWhateverItWasGivenRatherThanAConstant()
+    {
+        TextWriter saved = Console.Out;
+        var buffer = new StringWriter();
+        try
+        {
+            Console.SetOut(buffer);
+            McpHost.RunCli(["--version"], "1.2.3-rc.4+build");
+        }
+        finally
+        {
+            Console.SetOut(saved);
+        }
+
+        buffer.ToString().Should().Be("1.2.3-rc.4+build\n");
     }
 
     [McpServerToolType]

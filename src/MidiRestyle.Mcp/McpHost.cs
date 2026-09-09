@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using MidiRestyle.Core.Scales;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -6,12 +7,86 @@ using ModelContextProtocol.Server;
 namespace MidiRestyle.Mcp;
 
 /// <summary>
-/// Assembles the server. Split across files: the options live here, the command-line entry point
-/// arrives in a later task.
+/// Assembles the server and owns the command-line entry into it. The desktop exe hands its arguments
+/// to <see cref="IsCliInvocation"/> before Avalonia starts; everything else it launches normally.
 /// </summary>
 public static partial class McpHost
 {
     public const string ServerName = "MIDIRestyle";
+
+    /// <summary>
+    /// <c>tools/list</c> is answered once per agent session and its whole text lands in that session's
+    /// context, before the agent has done anything. Descriptions earn their place against this budget,
+    /// which is asserted by test rather than left as an aspiration.
+    /// </summary>
+    public const int MaxToolListBytes = 12 * 1024;
+
+    /// <summary>
+    /// True only for a leading <c>--mcp</c> or <c>--version</c>. Anything else - a file path, no
+    /// arguments, the same switch in second position - is the desktop app being launched and goes to
+    /// Avalonia untouched. Ordinal and case-sensitive: a Windows user typing <c>--MCP</c> gets the GUI,
+    /// which is visible and correctable, rather than a silent server on a terminal they did not expect.
+    /// </summary>
+    public static bool IsCliInvocation(string[] args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        return args.Length >= 1 && args[0] is "--mcp" or "--version";
+    }
+
+    /// <summary>
+    /// Runs the CLI mode named by <paramref name="args"/> and returns the process exit code. Call only
+    /// when <see cref="IsCliInvocation"/> agreed.
+    /// </summary>
+    /// <remarks>
+    /// <c>--version</c> writes the version and nothing else, with a bare <c>\n</c> so a caller on any
+    /// platform can compare the whole of stdout. Note that a WinExe launched from a prompt without
+    /// redirection has <see cref="Console.Out"/> bound to <see cref="Stream.Null"/>, so it prints
+    /// nothing visible there - this is for scripts, for pipes and for the end-to-end test, not for a
+    /// human at a console.
+    /// </remarks>
+    public static int RunCli(string[] args, string displayVersion)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        if (args[0] == "--version")
+        {
+            Console.Out.Write(displayVersion + "\n");
+            Console.Out.Flush();
+            return 0;
+        }
+
+        return RunServerAsync(displayVersion).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// The stdio server. Everything it has to say about loading the scale library goes to stderr:
+    /// stdout carries JSON-RPC and nothing else, which is why the logger factory is the one sink that
+    /// cannot be pointed anywhere else. Returns when the host closes stdin.
+    /// </summary>
+    private static async Task<int> RunServerAsync(string displayVersion)
+    {
+        using var loggerFactory = new StderrLoggerFactory();
+        ILogger log = loggerFactory.CreateLogger(ServerName);
+
+        PathProbe probe = PathProbe.Default();
+        ScaleLibraryLoadResult loaded = new ScaleLibraryLoader(probe).Load();
+        log.LogInformation("Scale library: {Count} scales. {Reason}", loaded.Library.Count, loaded.Reason);
+        foreach (ScaleLoadFailure failure in loaded.Failures)
+        {
+            log.LogWarning("Scale not loaded: {Id} - {Reason}", failure.Id, failure.Reason);
+        }
+
+        foreach (ScaleIdCollision collision in loaded.Collisions)
+        {
+            log.LogInformation("{Collision}", collision.Describe());
+        }
+
+        McpServerOptions options = BuildOptions(loaded.Library, probe, displayVersion);
+        var transport = new StdioServerTransport(options, loggerFactory);
+        await using McpServer server = McpServer.Create(transport, options, loggerFactory);
+        await server.RunAsync().ConfigureAwait(false);
+        return 0;
+    }
 
     /// <summary>
     /// The server's options, shared by the exe and the in-memory test harness. Tools and prompts are

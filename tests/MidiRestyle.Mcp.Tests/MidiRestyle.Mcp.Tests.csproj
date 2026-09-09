@@ -14,4 +14,10 @@
   <ItemGroup>
     <ProjectReference Include="../../src/MidiRestyle.Mcp/MidiRestyle.Mcp.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The pinned wire contract. Copied to the output folder because ContractTests reads it from
+         AppContext.BaseDirectory; the copy in the source tree is the one that is reviewed and
+         committed, and MIDIRESTYLE_UPDATE_GOLDEN=1 rewrites both. -->
+    <None Include="Contract/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

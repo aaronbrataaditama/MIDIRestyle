@@ -56,6 +56,26 @@ public sealed record RestyleReport(
     string OutputPath, ResolvedSettings Resolved, int NotesRestyled, TallyReport Tally,
     ChannelReport Channels, FidelityInfo Fidelity, IReadOnlyList<string> Warnings);
 
+/// <summary>
+/// One exported part, identified rather than merely named. Two tracks may carry the same display
+/// name, and a Format 0 file's per-channel pseudo-tracks share a track index as well - so the pair
+/// is what tells two parts apart, and it is the same pair <see cref="TrackSummary"/> reports and
+/// <c>restyle_midi</c>'s <c>exclude</c> addresses. A bare name would leave an agent unable to say
+/// which row of <c>inspect_midi</c>'s list a part came from.
+/// </summary>
+public sealed record PartSummary(int Track, int Channel, string Name);
+
+/// <param name="Tally">
+/// The same structured block <see cref="RestyleReport"/> carries. A score is produced from a restyle,
+/// so the restyle's losses are as real here as they are on the .mid path; they are also said in prose
+/// in <paramref name="Warnings"/>, exactly as on <c>restyle_midi</c>, but the counts are the part an
+/// agent can act on without parsing a sentence.
+/// </param>
+/// <remarks>
+/// Deliberately carries no fidelity or residual-cents block. MusicXML's <c>alter</c> takes the
+/// quantised half-accidental and the leftover comma is dropped: the format cannot represent it, and
+/// inventing a representation here would describe a file that does not exist.
+/// </remarks>
 public sealed record MusicXmlReport(
-    string OutputPath, ResolvedSettings Resolved, int MeasureCount, IReadOnlyList<string> Parts,
-    IReadOnlyList<string> Diagnostics, IReadOnlyList<string> Warnings);
+    string OutputPath, ResolvedSettings Resolved, int MeasureCount, IReadOnlyList<PartSummary> Parts,
+    TallyReport Tally, IReadOnlyList<string> Diagnostics, IReadOnlyList<string> Warnings);
