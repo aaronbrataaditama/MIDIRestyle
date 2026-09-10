@@ -60,23 +60,23 @@ The exe is also a [Model Context Protocol](https://modelcontextprotocol.io) serv
 — and exposes `inspect_midi`, `list_scales`, `describe_scale`, `restyle_midi` and `export_musicxml`,
 plus a `choose_a_style` prompt that walks a user to a scale.
 
-An agent host spawns it; you never run `--mcp` by hand. *Help ▸ Agent access…* in the app shows the
+An agent host spawns it; you never run `--mcp` by hand. *Help ▸ Agent access (MCP)…* in the app shows the
 snippets below with this exe's real path already filled in, which matters because a portable exe can
 live anywhere and be renamed.
 
 Claude Code:
 
 ```
-claude mcp add midirestyle -- "C:\path	o\MIDIRestyle.exe" --mcp
+claude mcp add midirestyle -- "C:\path\to\MIDIRestyle.exe" --mcp
 ```
 
 Claude Desktop (`claude_desktop_config.json`):
 
 ```json
-{ "mcpServers": { "midirestyle": { "command": "C:\path\to\MIDIRestyle.exe", "args": ["--mcp"] } } }
+{ "mcpServers": { "midirestyle": { "command": "C:\\path\\to\\MIDIRestyle.exe", "args": ["--mcp"] } } }
 ```
 
-Any other stdio host: `{ "command": "C:\path\to\MIDIRestyle.exe", "args": ["--mcp"] }`.
+Any other stdio host: `{ "command": "C:\\path\\to\\MIDIRestyle.exe", "args": ["--mcp"] }`.
 
 Every path passed to the tools must be absolute. Outputs default to `<input>.<scale-id>.mid` beside
 the input, and an existing file is never overwritten unless `overwrite` is true.
@@ -94,7 +94,7 @@ real clef and rest glyph outlines; **v1.4** added the About window and bundled t
 notices; and **v1.5** put bar counts in the file pane, a keyboard and a bar ruler on the piano roll,
 and rebuilt the degree wheel so its furniture stays put and playback only recolours it.
 
-Last verified green: 1356 tests, 0 warnings, and a portable publish of exactly one 50.3 MB file.
+Last verified green: 1568 tests, 0 warnings, and a portable publish of exactly one 51.2 MB file.
 
 ## Where the real documentation lives
 

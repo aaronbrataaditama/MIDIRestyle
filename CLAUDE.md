@@ -16,6 +16,11 @@ independent review at `.claude/review/REVIEW-2026-08-26-independent.md` whose fi
 Treat the plan as the design record rather than a to-do list: where it says a feature is deferred to
 v1.1, that is now history, and the invariants below describe what was actually built.
 
+**On top of that, `feature/embedded-mcp-server` adds a fourth assembly: the same exe run with
+`--mcp` is a headless Model Context Protocol server**, so an agent can drive the restyling pipeline
+without the UI. Five tools and one prompt over stdio, no window and no network. Its spec is at
+`.claude/plan/PLAN-embedded-mcp-server.md`; the architecture and invariants below cover it.
+
 The plan has been reviewed twice and the invariants below are the *outcome* of those reviews, not
 guesses. Several encode a specific failure that was actually reproduced. Treat them as constraints,
 not preferences.
@@ -459,7 +464,8 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
   reason: its default console logger writes to stdout.
 - **The MCP tools run the GUI's pipeline, not a copy of it.** `RestyleEngine` → `ChannelAllocator`
   (the same default ceiling) → `MidiFileExporter`. Two proofs, because one is not enough: the
-  `ResolverParityTests` show the resolver and `StylePanelViewModel.BuildSettings` build the same
+  `ResolverParityTests` (in `MidiRestyle.App.Tests`, since it needs the view model) show the
+  resolver and `StylePanelViewModel.BuildSettings` build the same
   `RestyleSettings`, and `RestyleMidiTests` show the emitted bytes match a direct Core call. Shared
   defaults live in `RestyleDefaults`; a second copy of any of them is the bug.
 - **Tool arguments are camelCase and enum-like values are strings.** The SDK binds by C# parameter
