@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MidiRestyle.App.Services;
 
 namespace MidiRestyle.App.Tests;
@@ -150,6 +151,9 @@ public class ThirdPartyNoticesTests
     /// The notices mention both of these for unrelated reasons - the .NET runtime section and the
     /// copyright lines - so a library matching only on one of them has not been named at all.
     /// </remarks>
+    /// <summary>The heading the MCP SDK's Apache-2.0 section starts at.</summary>
+    private const string McpSectionHeading = "7. MODELCONTEXTPROTOCOL - APACHE LICENSE 2.0";
+
     private static readonly string[] NonDistinctiveRoots = ["Microsoft", "System"];
 
     /// <summary>Whether the notices name <paramref name="library"/>, or the package it ships under.</summary>
@@ -170,7 +174,7 @@ public class ThirdPartyNoticesTests
     /// </remarks>
     private static bool IsNamed(string library, string notices)
     {
-        if (notices.Contains(library, StringComparison.Ordinal))
+        if (NamesExactly(notices, library))
         {
             return true;
         }
@@ -181,12 +185,12 @@ public class ThirdPartyNoticesTests
         {
             string prefix = string.Join('.', parts[..take]);
 
-            if (take == 1 && NonDistinctiveRoots.Contains(prefix, StringComparer.Ordinal))
+            if (NonDistinctiveRoots.Contains(prefix, StringComparer.Ordinal))
             {
                 return false;
             }
 
-            if (notices.Contains(prefix, StringComparison.Ordinal))
+            if (NamesExactly(notices, prefix))
             {
                 return true;
             }
@@ -194,6 +198,19 @@ public class ThirdPartyNoticesTests
 
         return false;
     }
+
+    /// <summary>Whether <paramref name="candidate"/> appears as a whole name, not as a prefix of a longer one.</summary>
+    /// <remarks>
+    /// A bare <c>Contains</c> lets an entry vouch for libraries it does not name.
+    /// <c>Microsoft.Extensions.Hosting</c> and <c>Microsoft.Extensions.Logging</c> - the two packages
+    /// this branch forbids by name - both matched on the strength of the <c>...Abstractions</c>
+    /// entries, so adding either would have shipped it unnamed with every test green. Requiring the
+    /// match to end at a token boundary also means <c>Microsoft.Extensions</c> now matches nothing at
+    /// all, since every occurrence of it is followed by a dot: the two-segment prefix had become
+    /// exactly as non-distinctive as the bare root it was introduced to replace.
+    /// </remarks>
+    private static bool NamesExactly(string notices, string candidate) =>
+        Regex.IsMatch(notices, Regex.Escape(candidate) + @"(?![\w.])");
 
     /// <summary>
     /// The Apache-2.0 licence text is reproduced in full for the MCP SDK.
@@ -218,10 +235,27 @@ public class ThirdPartyNoticesTests
     {
         string text = ThirdPartyNotices.Text;
 
-        text.Should().Contain("Apache License");
-        text.Should().Contain("Version 2.0, January 2004");
-        text.Should().Contain("TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION");
-        text.Should().Contain("END OF TERMS AND CONDITIONS");
+        int start = text.IndexOf(McpSectionHeading, StringComparison.Ordinal);
+        start.Should().BeGreaterThanOrEqualTo(0,
+            $"section '{McpSectionHeading}' is where the MCP SDK's licence lives; without it there is nothing to anchor to");
+
+        // Sliced, not searched whole. The document already carried three full Apache-2.0 copies
+        // before the MCP SDK existed - SkiaSharp/HarfBuzzSharp at :404 and the .NET runtime at
+        // :2253 and :2490 - so every marker below is satisfied by the pre-MCP file. Asserting them
+        // against the whole text pins nothing about section 7, which is the section that has to be
+        // there. Verified: the notices at e5a37c6^ contain "ModelContextProtocol" zero times and
+        // still satisfy all four.
+        string section = text[start..];
+
+        section.Should().Contain("Apache License");
+        section.Should().Contain("Version 2.0, January 2004");
+        section.Should().Contain("TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION");
+        section.Should().Contain("END OF TERMS AND CONDITIONS");
+
+        // A floor as well as markers: the four strings above all sit in the first fifth of the
+        // licence, so a copy truncated after the preamble would satisfy every one of them.
+        section.Length.Should().BeGreaterThan(9_000,
+            "the whole licence body must travel with the exe, not just its opening");
     }
 
     /// <summary>
