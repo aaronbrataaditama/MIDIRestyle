@@ -57,6 +57,41 @@ public class AgentAccessWindowRenderTests
     });
 
     [Fact]
+    public void TheExplanationParagraphIsOnScreen() => AvaloniaRenderFixture.Run(() =>
+    {
+        AgentAccessViewModel viewModel = new(InjectedPath);
+        AgentAccessWindow window = new(viewModel);
+
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            // Asserted directly rather than left to the smoke test's height check. Blanking this
+            // binding does shrink the window below the 300px floor today, so that assertion happens
+            // to catch it - but only by accident of the current layout: add a fourth snippet or a
+            // taller status line and the paragraph could vanish with every test still green. What
+            // matters is not that the window is tall, it is that this text reached the user.
+            string[] shown =
+            [
+                .. window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)
+            ];
+
+            shown.Should().Contain(viewModel.Explanation);
+
+            // The two claims the paragraph exists to make, pinned where they are actually rendered.
+            // "Nothing listens on the network" is a statement about this build's transport, and a
+            // user is being asked to paste an executable path into an agent's configuration on the
+            // strength of it - so it has to be on screen, not merely present on the view model.
+            viewModel.Explanation.Should().Contain("--mcp").And.Contain("network");
+        }
+        finally
+        {
+            window.Close();
+        }
+    });
+
+    [Fact]
     public void AllThreeSnippetsAreOnScreenCarryingThisExesPath() => AvaloniaRenderFixture.Run(() =>
     {
         AgentAccessViewModel viewModel = new(InjectedPath);
