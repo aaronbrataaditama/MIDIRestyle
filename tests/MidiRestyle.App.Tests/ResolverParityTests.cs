@@ -39,9 +39,11 @@ public sealed class ResolverParityTests : IDisposable
         {
             Directory.Delete(_root, recursive: true);
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // A file left open by a failed assertion must not turn one red test into two.
+            // A file left open by a failed assertion must not turn one red test into two - and on
+            // Windows a locked or read-only file raises UnauthorizedAccessException, which is not
+            // an IOException, so catching only that defeated the purpose.
         }
     }
 
@@ -49,19 +51,29 @@ public sealed class ResolverParityTests : IDisposable
     /// An empty request - nothing but a file and a target scale - must equal the panel as it stands
     /// after the user accepts the detected key, which is the GUI's own default path.
     /// </summary>
+    /// <param name="fixture">
+    /// Three fixtures, each present because a mutation survived without it. <see cref="Fixture.CMajor"/>
+    /// alone let a resolver that hardcodes the major source scale pass, since the major and minor arms
+    /// of <c>SourceScaleIdFor</c> are never told apart by a major-only file - <see cref="Fixture.AMinor"/>
+    /// separates them. And C major's tonic is pitch class 0, which every spelling convention agrees on,
+    /// so a sharp-preferring <c>TonicParser.FromDetected</c> was invisible; <see cref="Fixture.EFlatMajor"/>
+    /// detects to a black key, where flat-preferring and sharp-preferring disagree.
+    /// </param>
     /// <param name="tolerance">
     /// Null exercises the defaulted path on both sides; 0.5 proves the supplied value is carried
     /// rather than the default being echoed back, which would pass a null-only test.
     /// </param>
     [Theory]
-    [InlineData(null)]
-    [InlineData(0.5)]
-    public void AnEmptyRequestEqualsThePanelAfterApplyDetectedKey(double? tolerance)
+    [InlineData(Fixture.CMajor, null)]
+    [InlineData(Fixture.CMajor, 0.5)]
+    [InlineData(Fixture.AMinor, null)]
+    [InlineData(Fixture.EFlatMajor, null)]
+    public void AnEmptyRequestEqualsThePanelAfterApplyDetectedKey(Fixture fixture, double? tolerance)
     {
         PathProbe probe = new(
             Path.Combine(_root, "beside"), Path.Combine(_root, "appdata"), Path.Combine(_root, "data"));
         ScaleLibrary library = new ScaleLibraryLoader(probe).Load().Library;
-        string input = MidiFixtures.Write(Path.Combine(_root, "major.mid"), MidiFixtures.CMajorNotes);
+        string input = MidiFixtures.Write(Path.Combine(_root, $"{fixture}.mid"), NotesFor(fixture));
 
         Scale rast = library.Find("middleeast.arabic.maqam-rast")
             ?? throw new InvalidOperationException("the Rast fixture scale is missing from the library");
@@ -104,5 +116,80 @@ public sealed class ResolverParityTests : IDisposable
         // default, not by construction. Pinned anyway: if either default moves, the MCP path would
         // start writing files in a mode the user never chose, and nothing else would notice.
         mcp.OutputMode.Should().Be(gui.OutputMode);
+    }
+
+    /// <summary>Which synthesised file a theory case runs against.</summary>
+    public enum Fixture
+    {
+        /// <summary>Tonic-heavy C major: detects major, tonic pitch class 0.</summary>
+        CMajor,
+
+        /// <summary>Tonic-heavy A minor: detects MINOR, so the source-scale arms are told apart.</summary>
+        AMinor,
+
+        /// <summary>C major moved up three semitones: detects a BLACK-KEY tonic, pitch class 3.</summary>
+        EFlatMajor,
+    }
+
+    /// <summary>The notes for <paramref name="fixture"/>.</summary>
+    /// <remarks>
+    /// E flat major is transposed from the C major fixture rather than added to <c>MidiFixtures</c>,
+    /// because that file is a copy of the one in <c>MidiRestyle.Mcp.Tests</c> and the two silently
+    /// disagreeing about what "the same file" means is the single thing this test exists to rule out.
+    /// Transposing a whole scale by a constant preserves its intervals, so a detector that finds C
+    /// major in the one finds E flat major in the other.
+    /// </remarks>
+    private static (int Note, int Channel)[] NotesFor(Fixture fixture) => fixture switch
+    {
+        Fixture.CMajor => MidiFixtures.CMajorNotes,
+        Fixture.AMinor => MidiFixtures.AMinorNotes,
+        Fixture.EFlatMajor => [.. MidiFixtures.CMajorNotes.Select(n => (n.Note + 3, n.Channel))],
+        _ => throw new ArgumentOutOfRangeException(nameof(fixture)),
+    };
+
+    /// <summary>
+    /// An exclusion set by the user reaches the engine identically down both paths.
+    /// </summary>
+    /// <remarks>
+    /// Kept out of the theory above because the two paths populate <c>Excluded</c> from entirely
+    /// different sources - the GUI from its track list, straight into <c>BuildSettings</c>; the MCP
+    /// from <c>request.Exclude</c>, through a validation pass the GUI has no equivalent of. Comparing
+    /// two empty sets, which is all the theory does, proves nothing about the <c>(Track, Channel)</c>
+    /// key agreeing. It has to agree: it is what <c>ShouldRestyle</c> matches on, and the loader's
+    /// Format-0 per-channel split makes the track index less obvious than it looks.
+    /// </remarks>
+    [Fact]
+    public void AnExcludedTrackChannelReachesTheEngineTheSameWayDownBothPaths()
+    {
+        PathProbe probe = new(
+            Path.Combine(_root, "beside"), Path.Combine(_root, "appdata"), Path.Combine(_root, "data"));
+        ScaleLibrary library = new ScaleLibraryLoader(probe).Load().Library;
+        string input = MidiFixtures.Write(Path.Combine(_root, "excluded.mid"), MidiFixtures.CMajorNotes);
+
+        Scale rast = library.Find("middleeast.arabic.maqam-rast")
+            ?? throw new InvalidOperationException("the Rast fixture scale is missing from the library");
+
+        MidiProject project = MidiFileLoader.Load(input);
+
+        // Taken from the file rather than assumed, so the test cannot pass by excluding something
+        // that is not there - the resolver rejects an unknown track-channel outright.
+        TrackInfo target = project.Tracks[0];
+
+        StylePanelViewModel panel = new(library) { SelectedScale = rast };
+        panel.ApplyDetectedKey(KeyDetector.Detect(project));
+        RestyleSettings gui = panel.BuildSettings(
+            new HashSet<(int Track, int Channel)> { (target.TrackIndex, target.Channel) });
+
+        RestyleRequest request = new(
+            input, rast.Id, null, null, null,
+            [new TrackChannelRef(target.TrackIndex, target.Channel)],
+            null, null, null, null, null, null, false);
+
+        new RestyleRequestResolver(library)
+            .TryResolve(request, out Resolution? resolution, out string? error)
+            .Should().BeTrue(error);
+
+        resolution!.Settings.Excluded.Should().BeEquivalentTo(gui.Excluded);
+        gui.Excluded.Should().ContainSingle("the fixture has one track-channel and it was excluded");
     }
 }
