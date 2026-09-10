@@ -116,18 +116,21 @@ public class ThirdPartyNoticesTests
     [Fact]
     public void EveryLibraryTheAppShipsIsNamedInTheNotices()
     {
-        string manifest = Path.Combine(AppContext.BaseDirectory, "MIDIRestyle.deps.json");
-        File.Exists(manifest).Should().BeTrue("the App ProjectReference copies its dependency manifest beside the exe");
+        List<string> manifests = [.. DependencyManifests()];
+        manifests.Should().NotBeEmpty("the App ProjectReference copies its dependency manifest beside the exe");
 
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(manifest));
         var shipped = new SortedSet<string>(StringComparer.Ordinal);
-        foreach (JsonProperty target in document.RootElement.GetProperty("targets").EnumerateObject())
+        foreach (string manifest in manifests)
         {
-            foreach (JsonProperty library in target.Value.EnumerateObject())
+            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(manifest));
+            foreach (JsonProperty target in document.RootElement.GetProperty("targets").EnumerateObject())
             {
-                if (library.Value.TryGetProperty("runtime", out _) || library.Value.TryGetProperty("native", out _))
+                foreach (JsonProperty library in target.Value.EnumerateObject())
                 {
-                    shipped.Add(library.Name.Split('/')[0]);
+                    if (library.Value.TryGetProperty("runtime", out _) || library.Value.TryGetProperty("native", out _))
+                    {
+                        shipped.Add(library.Name.Split('/')[0]);
+                    }
                 }
             }
         }
@@ -145,6 +148,67 @@ public class ThirdPartyNoticesTests
             "every library the exe redistributes must be named in the notices - read its real licence out of the package, never from memory");
     }
 
+
+
+    /// <summary>Every dependency manifest that describes what this app ships.</summary>
+    /// <remarks>
+    /// <para>
+    /// The test-output manifest is the App's <em>Debug, RID-less</em> build: 34 libraries. The real
+    /// artefact is a win-x64 self-contained publish, whose manifest has 38 - the extra four being
+    /// <c>SkiaSharp.NativeAssets.Win32</c>, <c>HarfBuzzSharp.NativeAssets.Win32</c>,
+    /// <c>Avalonia.Angle.Windows.Natives</c> and the runtime pack. Reading only the first left the
+    /// mechanical guard blind to exactly the class of package the hand-written allowlist cannot be
+    /// trusted to remember: a new RID-specific native would ship unnamed with everything green.
+    /// </para>
+    /// <para>
+    /// So any publish manifest present is read too, and the sets are unioned. <b>Be honest about what
+    /// that buys today: nothing.</b> The shipping publish is single-file, which bundles the manifest
+    /// rather than writing it beside the exe, and an unbundled publish belongs in a scratch directory
+    /// because this folder is gated to exactly one file. So the union currently finds no second
+    /// manifest, and the four RID-native packages remain covered only by the hand-written
+    /// <see cref="EveryRedistributedComponentIsNamed"/> allowlist.
+    /// </para>
+    /// <para>
+    /// What is here is the groundwork and the part that cannot be done later: the plumbing, and the
+    /// runtime-pack alias without which a publish manifest could not be read at all. Closing the gap
+    /// properly needs an unbundled publish in CI feeding this test a manifest path. Until then this
+    /// is a partial mitigation, not a fix, and calling it one would be the same false reassurance
+    /// this file has already shipped once.
+    /// </para>
+    /// </remarks>
+    private static IEnumerable<string> DependencyManifests()
+    {
+        string local = Path.Combine(AppContext.BaseDirectory, "MIDIRestyle.deps.json");
+        if (File.Exists(local))
+        {
+            yield return local;
+        }
+
+        DirectoryInfo? dir = new(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "MIDIRestyle.slnx")))
+        {
+            dir = dir.Parent;
+        }
+
+        if (dir is null)
+        {
+            yield break;
+        }
+
+        string publishRoot = Path.Combine(dir.FullName, "src", "MidiRestyle.App", "bin");
+        if (!Directory.Exists(publishRoot))
+        {
+            yield break;
+        }
+
+        foreach (string found in Directory.EnumerateFiles(publishRoot, "MIDIRestyle.deps.json", SearchOption.AllDirectories))
+        {
+            if (found.Contains($"{Path.DirectorySeparatorChar}publish{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            {
+                yield return found;
+            }
+        }
+    }
 
     /// <summary>First segments that name no library on their own.</summary>
     /// <remarks>
@@ -177,6 +241,14 @@ public class ThirdPartyNoticesTests
         if (NamesExactly(notices, library))
         {
             return true;
+        }
+
+        // The runtime pack ships as runtimepack.Microsoft.NETCore.App.Runtime.<rid>, which no prefix
+        // of reaches the name the notices actually use for it. Aliased rather than added to the
+        // notices under its package id, because ".NET runtime" is what a reader is looking for.
+        if (library.StartsWith("runtimepack.Microsoft.NETCore.App.Runtime", StringComparison.Ordinal))
+        {
+            return NamesExactly(notices, ".NET runtime");
         }
 
         string[] parts = library.Split('.');

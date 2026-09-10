@@ -25,6 +25,17 @@ namespace MidiRestyle.App.Tests;
 /// equality check would pass or fail as one opaque boolean, and <see cref="RestyleSettings"/> is
 /// not a record anyway. Field by field, a failure names the field that drifted.
 /// </para>
+/// <para>
+/// <b>Every case here uses the default <c>ScaleDegree</c> strategy, and a <c>NearestPitch</c> leg
+/// would fail as written.</b> Under <c>NearestPitch</c> the resolver never looks the source scale up
+/// at all - <c>usesSource</c> gates the whole resolution - so it carries a null <c>SourceScale</c>
+/// and a default <c>SourceTonic</c>, while the panel passes through whatever the detected key
+/// seeded, since it only dims those controls. The difference is inert: the <c>NearestPitch</c> arm
+/// of the mapper reads neither field. Left alone deliberately rather than forced into agreement,
+/// because making the resolver resolve a source it does not use would make key detection mandatory
+/// for requests that succeed without it today. Recorded here so the next person to add the case
+/// knows the failure is expected, and why it is not a bug.
+/// </para>
 /// </remarks>
 public sealed class ResolverParityTests : IDisposable
 {

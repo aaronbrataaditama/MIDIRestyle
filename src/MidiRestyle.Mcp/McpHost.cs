@@ -21,6 +21,17 @@ public static partial class McpHost
     /// </summary>
     public const int MaxToolListBytes = 12 * 1024;
 
+    /// <summary>The switch that makes the exe run as a stdio MCP server rather than opening a window.</summary>
+    /// <remarks>
+    /// The one place this string is written. <c>AgentAccessViewModel</c> builds the configuration
+    /// snippets the user pastes into an agent host from this same constant, so the dialog cannot
+    /// advertise a switch the dispatcher does not accept.
+    /// </remarks>
+    public const string McpSwitch = "--mcp";
+
+    /// <summary>The switch that prints the version and exits.</summary>
+    public const string VersionSwitch = "--version";
+
     /// <summary>
     /// True only for a leading <c>--mcp</c> or <c>--version</c>. Anything else - a file path, no
     /// arguments, the same switch in second position - is the desktop app being launched and goes to
@@ -30,7 +41,7 @@ public static partial class McpHost
     public static bool IsCliInvocation(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        return args.Length >= 1 && args[0] is "--mcp" or "--version";
+        return args.Length >= 1 && (args[0] == McpSwitch || args[0] == VersionSwitch);
     }
 
     /// <summary>

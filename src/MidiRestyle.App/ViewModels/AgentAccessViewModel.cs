@@ -1,3 +1,4 @@
+using MidiRestyle.Mcp;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -33,11 +34,13 @@ public sealed class AgentAccessViewModel
 
     /// <summary>The switch that makes the exe run as a stdio MCP server rather than opening a window.</summary>
     /// <remarks>
-    /// Restated here rather than shared with <c>McpHost</c>, which owns the dispatch. The two are
-    /// tied together by a test that feeds these very snippets back through the real dispatcher, so
-    /// they cannot drift apart silently.
+    /// Taken from <see cref="McpHost.McpSwitch"/>, which owns the dispatch, rather than restated.
+    /// It was restated once, with a test feeding these snippets back through the real dispatcher to
+    /// hold the two literals together - but that test asserts only that the exe recognises the
+    /// argument, and <c>IsCliInvocation</c> also accepts <c>--version</c>, so the guarantee was
+    /// weaker than it read. One constant is a contract; two are a coincidence maintained by hand.
     /// </remarks>
-    public const string McpSwitch = "--mcp";
+    public const string McpSwitch = McpHost.McpSwitch;
 
     /// <summary>The filename assumed only when the runtime will not say what is running.</summary>
     private const string FallbackExeName = "MIDIRestyle.exe";
