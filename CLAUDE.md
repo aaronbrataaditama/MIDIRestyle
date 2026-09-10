@@ -67,7 +67,7 @@ contributed. It also has to strip `*.pdb`: SkiaSharp's and HarfBuzz's RID-native
 there and `DebugType=none` does not reach them, since that only governs the App project's own output.
 
 `AssertSingleFilePublish` runs `AfterTargets="Publish"` and fails the build if the folder holds
-anything but one file. Verified: exactly one file, 50.2 MB (47.9 MiB), and it materialises its `scales/` folder
+anything but one file. Verified: exactly one file, 51.2 MB (48.8 MiB), and it materialises its `scales/` folder
 beside itself on first run. Do **not** use `IncludeAllContentForSelfExtract`: it bundles everything
 but repoints `AppContext.BaseDirectory` at the extraction directory, breaking settings-beside-exe.
 

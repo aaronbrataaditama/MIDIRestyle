@@ -91,6 +91,8 @@ public class ThirdPartyNoticesTests
     [InlineData("Tmds.DBus.Protocol")]
     [InlineData("ANGLE")]
     [InlineData(".NET runtime")]
+    [InlineData("ModelContextProtocol")]
+    [InlineData("Microsoft.Extensions")]
     public void EveryRedistributedComponentIsNamed(string component)
     {
         ThirdPartyNotices.Text.Should().Contain(component);
@@ -136,11 +138,90 @@ public class ThirdPartyNoticesTests
         string notices = ThirdPartyNotices.Text;
         List<string> unnamed = [.. shipped
             .Where(name => !name.StartsWith("MidiRestyle", StringComparison.Ordinal) && name != "MIDIRestyle")
-            .Where(name => !notices.Contains(name, StringComparison.Ordinal)
-                        && !notices.Contains(name.Split('.')[0], StringComparison.Ordinal))];
+            .Where(name => !IsNamed(name, notices))];
 
         unnamed.Should().BeEmpty(
             "every library the exe redistributes must be named in the notices - read its real licence out of the package, never from memory");
+    }
+
+
+    /// <summary>First segments that name no library on their own.</summary>
+    /// <remarks>
+    /// The notices mention both of these for unrelated reasons - the .NET runtime section and the
+    /// copyright lines - so a library matching only on one of them has not been named at all.
+    /// </remarks>
+    private static readonly string[] NonDistinctiveRoots = ["Microsoft", "System"];
+
+    /// <summary>Whether the notices name <paramref name="library"/>, or the package it ships under.</summary>
+    /// <remarks>
+    /// <para>
+    /// Avalonia ships a dozen assemblies from one project under one licence, so a library counts as
+    /// named when a shorter form of it is - but only down to a form that still identifies something.
+    /// Matching bare first segments was the original rule and it left a hole: every
+    /// <c>Microsoft.Extensions.*</c> assembly reduced to "Microsoft", which the notices contain in
+    /// the .NET runtime section, so all ten passed without being named anywhere.
+    /// </para>
+    /// <para>
+    /// Demonstrated rather than assumed: renaming every <c>Microsoft.Extensions</c> entry out of the
+    /// notices left this test green, while the ten assemblies it covers went unnamed. That is the
+    /// exact licence-compliance breach Task 19's review found, surviving inside the test written to
+    /// prevent it.
+    /// </para>
+    /// </remarks>
+    private static bool IsNamed(string library, string notices)
+    {
+        if (notices.Contains(library, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        string[] parts = library.Split('.');
+
+        for (int take = parts.Length - 1; take >= 1; take--)
+        {
+            string prefix = string.Join('.', parts[..take]);
+
+            if (take == 1 && NonDistinctiveRoots.Contains(prefix, StringComparer.Ordinal))
+            {
+                return false;
+            }
+
+            if (notices.Contains(prefix, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The Apache-2.0 licence text is reproduced in full for the MCP SDK.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Apache-2.0 section 4(a) requires a copy of the licence to travel with the redistribution, so
+    /// for a single-file exe that means the text has to be embedded - the same reason the Inter font
+    /// carries its OFL and the MIT components carry theirs. Those two already have tests; this one
+    /// did not, which left the only Apache component on the branch as the only licence whose body
+    /// nothing pinned.
+    /// </para>
+    /// <para>
+    /// The four markers span the whole document - title, version line, the head of the terms, and
+    /// the closing line - so a truncated or summarised copy fails rather than a merely mentioned
+    /// one. Naming the component is <see cref="EveryRedistributedComponentIsNamed"/>'s job; this is
+    /// about the licence body being present to satisfy the condition it is redistributed under.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void TheApacheLicenceIsReproducedForTheMcpSdk()
+    {
+        string text = ThirdPartyNotices.Text;
+
+        text.Should().Contain("Apache License");
+        text.Should().Contain("Version 2.0, January 2004");
+        text.Should().Contain("TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION");
+        text.Should().Contain("END OF TERMS AND CONDITIONS");
     }
 
     /// <summary>
