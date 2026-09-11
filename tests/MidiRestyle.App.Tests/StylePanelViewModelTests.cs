@@ -4,6 +4,7 @@ using MidiRestyle.Core.Analysis;
 using MidiRestyle.Core.Mapping;
 using MidiRestyle.Core.Model;
 using MidiRestyle.Core.Output;
+using MidiRestyle.Core.Restyle;
 using MidiRestyle.Core.Scales;
 using MidiRestyle.Core.Tuning;
 
@@ -52,7 +53,7 @@ public class StylePanelViewModelTests
         [0, 203.91, 384.36, 498.04, 701.96, 905.87, 1086.31], Citation);
 
     private static Scale Aeolian() => new(
-        StylePanelViewModel.MinorSourceScaleId, "Aeolian", "Western Church Modes", "Europe",
+        RestyleDefaults.MinorSourceScaleId, "Aeolian", "Western Church Modes", "Europe",
         [0, 200, 300, 500, 700, 800, 1000], Citation);
 
     private static ScaleLibrary Library() => ScaleLibrary.Build(
@@ -79,7 +80,7 @@ public class StylePanelViewModelTests
         vm.FilteredScales.Select(s => s.Id).Should().BeEquivalentTo(
             ["eastasia.chinese.gong", "eastasia.chinese.shang", "eastasia.chinese.yu",
              "seasia.gamelan.slendro", "seasia.gamelan.pelog", "turkish.makam.rast",
-             StylePanelViewModel.MinorSourceScaleId]);
+             RestyleDefaults.MinorSourceScaleId]);
 
         vm.FilteredScales.Should().OnlyHaveUniqueItems();
         vm.MatchCount.Should().Be(7);
@@ -391,7 +392,7 @@ public class StylePanelViewModelTests
         // Only the minor seed exists in this fixture library; a missing id must leave the choice alone.
         if (top.IsMinor)
         {
-            vm.SourceScale!.Id.Should().Be(StylePanelViewModel.MinorSourceScaleId);
+            vm.SourceScale!.Id.Should().Be(RestyleDefaults.MinorSourceScaleId);
         }
         else
         {
@@ -452,7 +453,7 @@ public class StylePanelViewModelTests
     {
         StylePanelViewModel vm = Panel();
         vm.SelectedScale = Find(vm, "eastasia.chinese.gong");
-        vm.SourceScale = Find(vm, StylePanelViewModel.MinorSourceScaleId);
+        vm.SourceScale = Find(vm, RestyleDefaults.MinorSourceScaleId);
 
         RestyleSettings settings = vm.BuildSettings(new HashSet<(int, int)> { (1, 3) });
 
@@ -663,7 +664,7 @@ public class StylePanelViewModelTests
         // Notatability affects the v1.1 staff view and MusicXML export, nothing else. Slendro is an
         // ordinary choice and the panel must not discourage it in any way.
         StylePanelViewModel vm = Panel();
-        vm.SourceScale = Find(vm, StylePanelViewModel.MinorSourceScaleId);
+        vm.SourceScale = Find(vm, RestyleDefaults.MinorSourceScaleId);
 
         vm.SelectedScale = Find(vm, "seasia.gamelan.slendro");
 

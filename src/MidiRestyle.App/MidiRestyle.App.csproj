@@ -5,9 +5,6 @@
     <RootNamespace>MidiRestyle.App</RootNamespace>
     <AssemblyName>MIDIRestyle</AssemblyName>
 
-    <!-- The shipping version. Read at runtime by AboutViewModel rather than restated in the
-         markup, so the About box cannot drift out of step with what was actually built. -->
-    <Version>1.5.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- The exe's own icon, as Explorer, the taskbar and shortcuts see it. Nine sizes from 16 to
@@ -99,6 +96,12 @@
 
   <ItemGroup>
     <ProjectReference Include="../MidiRestyle.Core/MidiRestyle.Core.csproj" />
+    <!--
+      The MCP server lives in the same executable: MIDIRestyle.exe with the mcp switch is what an
+      agent host spawns, so there is one binary to install and it cannot drift from the GUI it
+      shares a scale library with. Program.Main dispatches to it before any Avalonia API is touched.
+    -->
+    <ProjectReference Include="../MidiRestyle.Mcp/MidiRestyle.Mcp.csproj" />
     <ProjectReference Include="../MidiRestyle.Playback/MidiRestyle.Playback.csproj" />
   </ItemGroup>
 

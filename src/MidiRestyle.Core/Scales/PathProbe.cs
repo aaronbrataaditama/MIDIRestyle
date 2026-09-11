@@ -1,4 +1,4 @@
-namespace MidiRestyle.App.Services;
+namespace MidiRestyle.Core.Scales;
 
 /// <summary>
 /// The outcome of probing a single directory for write access.
@@ -30,12 +30,47 @@ public sealed class PathProbe
     /// <summary>The %APPDATA%\MIDIRestyle fallback folder.</summary>
     public string AppDataDirectory { get; }
 
-    public PathProbe(string? besideExeDirectory = null, string? appDataDirectory = null)
+    /// <summary>The %APPDATA% subfolder. Deliberately the one place Core knows the product name.</summary>
+    public const string AppDataFolderName = "MIDIRestyle";
+
+    /// <summary>
+    /// Environment variable that replaces both candidate roots with one directory. Used by tests and
+    /// CI so a headless run never writes beside the exe; honoured by the GUI too, because the loader,
+    /// the scale editor and the settings file must all agree on one root.
+    /// </summary>
+    public const string DataRootOverrideVariable = "MIDIRESTYLE_DATA_ROOT";
+
+    /// <summary>The honoured override root (fully qualified), or null when none is in force.</summary>
+    public string? OverrideRoot { get; }
+
+    /// <summary>Why a supplied override was ignored, or null.</summary>
+    public string? OverrideRejectedReason { get; }
+
+    private string Prefix => OverrideRejectedReason is null ? "" : OverrideRejectedReason + " ";
+
+    public PathProbe(string? besideExeDirectory = null, string? appDataDirectory = null, string? overrideRoot = null)
     {
         BesideExeDirectory = besideExeDirectory ?? AppContext.BaseDirectory;
         AppDataDirectory = appDataDirectory
-            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MIDIRestyle");
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolderName);
+
+        if (!string.IsNullOrWhiteSpace(overrideRoot))
+        {
+            if (Path.IsPathFullyQualified(overrideRoot))
+            {
+                OverrideRoot = Path.GetFullPath(overrideRoot);
+            }
+            else
+            {
+                OverrideRejectedReason =
+                    $"{DataRootOverrideVariable} ignored: '{overrideRoot}' is not an absolute path.";
+            }
+        }
     }
+
+    /// <summary>The probe the app uses: real directories, override taken from the environment.</summary>
+    public static PathProbe Default() =>
+        new(overrideRoot: Environment.GetEnvironmentVariable(DataRootOverrideVariable));
 
     public WritabilityProbe ProbeBesideExe() => ProbeWritability(BesideExeDirectory, "beside-the-exe");
 
@@ -48,10 +83,20 @@ public sealed class PathProbe
     /// </summary>
     public WritableRootResult ResolveWritableRoot()
     {
+        if (OverrideRoot is { } over)
+        {
+            WritabilityProbe probe = ProbeWritability(over, DataRootOverrideVariable);
+            return new WritableRootResult(
+                over,
+                IsBesideExe: false,
+                probe.IsWritable,
+                $"Root overridden by {DataRootOverrideVariable}. {probe.Reason}");
+        }
+
         var beside = ProbeBesideExe();
         if (beside.IsWritable)
         {
-            return new WritableRootResult(BesideExeDirectory, IsBesideExe: true, IsWritable: true, beside.Reason);
+            return new WritableRootResult(BesideExeDirectory, IsBesideExe: true, IsWritable: true, Prefix + beside.Reason);
         }
 
         var appData = ProbeAppData();
@@ -61,14 +106,14 @@ public sealed class PathProbe
                 AppDataDirectory,
                 IsBesideExe: false,
                 IsWritable: true,
-                $"{beside.Reason} Falling back to %APPDATA%: {appData.Reason}");
+                Prefix + $"{beside.Reason} Falling back to %APPDATA%: {appData.Reason}");
         }
 
         return new WritableRootResult(
             AppDataDirectory,
             IsBesideExe: false,
             IsWritable: false,
-            $"Neither location is writable. Beside-the-exe: {beside.Reason} AppData: {appData.Reason}");
+            Prefix + $"Neither location is writable. Beside-the-exe: {beside.Reason} AppData: {appData.Reason}");
     }
 
     /// <summary>

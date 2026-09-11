@@ -1,6 +1,6 @@
-using MidiRestyle.App.Services;
+using MidiRestyle.Core.Scales;
 
-namespace MidiRestyle.App.Tests;
+namespace MidiRestyle.Core.Tests;
 
 /// <summary>
 /// All temp directories are unique per test and cleaned up afterwards, so nothing is ever written
@@ -111,5 +111,69 @@ public sealed class PathProbeTests : IDisposable
 
         probe.BesideExeDirectory.Should().Be(AppContext.BaseDirectory);
         probe.AppDataDirectory.Should().Contain("MIDIRestyle");
+    }
+
+    [Fact]
+    public void An_absolute_override_root_wins_and_says_so()
+    {
+        var beside = NewPath("beside"); var appData = NewPath("appdata"); var over = NewPath("override");
+        Directory.CreateDirectory(beside); Directory.CreateDirectory(appData);
+
+        var probe = new PathProbe(beside, appData, over);
+        var result = probe.ResolveWritableRoot();
+
+        probe.OverrideRoot.Should().Be(Path.GetFullPath(over));
+        result.Root.Should().Be(Path.GetFullPath(over));
+        result.IsWritable.Should().BeTrue();
+        result.IsBesideExe.Should().BeFalse();
+        result.Reason.Should().Contain(PathProbe.DataRootOverrideVariable);
+    }
+
+    [Fact]
+    public void A_relative_override_is_ignored_with_the_reason_stated()
+    {
+        var beside = NewPath("beside"); var appData = NewPath("appdata");
+        Directory.CreateDirectory(beside); Directory.CreateDirectory(appData);
+
+        var probe = new PathProbe(beside, appData, "relative\\root");
+        var result = probe.ResolveWritableRoot();
+
+        probe.OverrideRoot.Should().BeNull();
+        probe.OverrideRejectedReason.Should().Contain("not an absolute path");
+        result.Root.Should().Be(beside);
+        result.Reason.Should().Contain("ignored");
+    }
+
+    [Fact]
+    public void An_unwritable_override_is_reported_not_silently_replaced()
+    {
+        var beside = NewPath("beside"); var appData = NewPath("appdata"); var blocked = NewPath("blocked");
+        Directory.CreateDirectory(beside); Directory.CreateDirectory(appData);
+        File.WriteAllText(blocked, "a file where a directory should be");
+
+        var result = new PathProbe(beside, appData, blocked).ResolveWritableRoot();
+
+        result.Root.Should().Be(Path.GetFullPath(blocked));
+        result.IsWritable.Should().BeFalse();
+        result.Reason.Should().Contain(PathProbe.DataRootOverrideVariable);
+    }
+
+    [Fact]
+    public void Default_reads_the_environment_variable()
+    {
+        string? saved = Environment.GetEnvironmentVariable(PathProbe.DataRootOverrideVariable);
+        try
+        {
+            var over = NewPath("env-override");
+            Environment.SetEnvironmentVariable(PathProbe.DataRootOverrideVariable, over);
+            PathProbe.Default().OverrideRoot.Should().Be(Path.GetFullPath(over));
+
+            Environment.SetEnvironmentVariable(PathProbe.DataRootOverrideVariable, null);
+            PathProbe.Default().OverrideRoot.Should().BeNull();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(PathProbe.DataRootOverrideVariable, saved);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MidiRestyle.Core.Scales;
 
 namespace MidiRestyle.App.Services;
 
@@ -13,6 +14,9 @@ public enum SettingsLocation
 
     /// <summary>The %APPDATA%\MIDIRestyle fallback - <see cref="PathProbe.AppDataDirectory"/>.</summary>
     AppData,
+
+    /// <summary>The MIDIRESTYLE_DATA_ROOT override root.</summary>
+    Override,
 }
 
 public sealed record SettingsLoadResult(AppSettings Settings, SettingsLocation Location, string Reason);
@@ -41,11 +45,20 @@ public sealed class SettingsService
 
     public SettingsService(PathProbe? pathProbe = null)
     {
-        _pathProbe = pathProbe ?? new PathProbe();
+        _pathProbe = pathProbe ?? PathProbe.Default();
     }
 
     public SettingsLoadResult Load()
     {
+        if (_pathProbe.OverrideRoot is { } over)
+        {
+            var overridePath = Path.Combine(over, SettingsFileName);
+            if (File.Exists(overridePath))
+            {
+                return LoadFrom(overridePath, SettingsLocation.Override, $"in the {PathProbe.DataRootOverrideVariable} root");
+            }
+        }
+
         var besideExePath = Path.Combine(_pathProbe.BesideExeDirectory, SettingsFileName);
         if (File.Exists(besideExePath))
         {
@@ -84,8 +97,14 @@ public sealed class SettingsService
             return new SettingsSaveResult(false, Location: null, $"Failed to write settings to '{path}': {ex.Message}");
         }
 
-        var location = resolved.IsBesideExe ? SettingsLocation.BesideExe : SettingsLocation.AppData;
-        var where = resolved.IsBesideExe ? "beside the exe" : "%APPDATA%";
+        var location = _pathProbe.OverrideRoot is not null ? SettingsLocation.Override
+            : resolved.IsBesideExe ? SettingsLocation.BesideExe : SettingsLocation.AppData;
+        var where = location switch
+        {
+            SettingsLocation.Override => PathProbe.DataRootOverrideVariable,
+            SettingsLocation.BesideExe => "beside the exe",
+            _ => "%APPDATA%",
+        };
         return new SettingsSaveResult(true, location, $"Saved settings to '{path}' ({where}).");
     }
 

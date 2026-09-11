@@ -1,4 +1,3 @@
-using MidiRestyle.App.Services;
 using MidiRestyle.App.ViewModels;
 using MidiRestyle.Core.Scales;
 
@@ -6,7 +5,7 @@ namespace MidiRestyle.App.Tests;
 
 /// <summary>
 /// Every test points a <see cref="PathProbe"/> at unique temp directories, exactly like
-/// <c>ScaleLibraryServiceTests</c>, so nothing here ever touches the real beside-the-exe folder or
+/// <c>ScaleLibraryLoaderTests</c>, so nothing here ever touches the real beside-the-exe folder or
 /// the user's actual %APPDATA%.
 /// </summary>
 public sealed class ScaleEditorViewModelTests : IDisposable
@@ -40,7 +39,7 @@ public sealed class ScaleEditorViewModelTests : IDisposable
 
     private ScaleEditorViewModel Editor() => new(new PathProbe(_besideExe, _appData));
 
-    private string UserScalesPath => Path.Combine(_besideExe, ScaleLibraryService.UserScalesFileName);
+    private string UserScalesPath => Path.Combine(_besideExe, ScaleLibraryLoader.UserScalesFileName);
 
     private static Scale ShippedGong() => new(
         "eastasia.china.gong", "Gong", "Chinese Pentatonic", "East Asia",

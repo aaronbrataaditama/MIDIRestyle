@@ -105,15 +105,17 @@ public partial class MainWindow : Window
     /// Assembles the scale library and hands the rail a view model over it.
     /// </summary>
     /// <remarks>
-    /// Runs here rather than in the view model because <c>ScaleLibraryService</c> reads embedded
-    /// assets through Avalonia's <c>AssetLoader</c>, which throws without an initialised runtime.
+    /// Runs here rather than in the view model because <see cref="ScaleLibraryLoader"/> touches the
+    /// filesystem and reports failures to the status bar, and the window is what owns that status
+    /// bar - no Avalonia asset dependency remains, since Task 5 moved the embedded scale JSON into
+    /// Core as manifest resources.
     /// A failure is reported, not thrown: a corrupt user scale file must not stop the app opening.
     /// </remarks>
     private void BuildStylePanel()
     {
         try
         {
-            ScaleLibraryLoadResult loaded = new ScaleLibraryService().Load();
+            ScaleLibraryLoadResult loaded = new ScaleLibraryLoader().Load();
 
             StylePanelViewModel panel = new(loaded.Library);
             panel.PropertyChanged += OnStylePanelPropertyChanged;
@@ -720,7 +722,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            ScaleLibraryLoadResult loaded = new ScaleLibraryService().Load();
+            ScaleLibraryLoadResult loaded = new ScaleLibraryLoader().Load();
             Directory.CreateDirectory(loaded.ScalesDirectory);
 
             Process.Start(new ProcessStartInfo
@@ -737,6 +739,18 @@ public partial class MainWindow : Window
     }
 
     // ---- Help menu ---------------------------------------------------------------------------
+
+    /// <summary>
+    /// Shows the ready-to-paste MCP configuration for this exe.
+    /// </summary>
+    /// <remarks>
+    /// Sits in Help rather than in a settings page because it configures something outside this
+    /// application: the exe already answers --mcp whether or not anyone opens this window, so there
+    /// is nothing here to switch on. It is above About with a separator, so the Help menu reads as
+    /// "how to drive this from an agent" and then "what this is".
+    /// </remarks>
+    private async void OnAgentAccessClicked(object? sender, RoutedEventArgs e) =>
+        await new AgentAccessWindow().ShowDialog(this).ConfigureAwait(true);
 
     private async void OnAboutClicked(object? sender, RoutedEventArgs e) =>
         await new AboutWindow().ShowDialog(this).ConfigureAwait(true);

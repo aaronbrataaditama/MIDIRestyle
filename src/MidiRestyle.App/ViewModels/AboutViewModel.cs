@@ -1,5 +1,5 @@
-using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MidiRestyle.App.Services;
 
 namespace MidiRestyle.App.ViewModels;
 
@@ -85,31 +85,5 @@ public sealed partial class AboutViewModel : ObservableObject
 
     public string VersionLine => $"Version {DisplayVersion}";
 
-    /// <summary>
-    /// The shipping version, read from the assembly rather than typed into this file.
-    /// </summary>
-    /// <remarks>
-    /// Cut at the '+' because <c>InformationalVersion</c> carries the source revision id after one
-    /// whenever the build has repository information: "1.3.0+398e5ad..." is a build identifier, not
-    /// something to show a user. Falls back to the plain assembly version if the attribute is
-    /// missing. Note this reads an attribute, never <c>Assembly.Location</c> - that returns an empty
-    /// string under PublishSingleFile and is banned for the whole solution.
-    /// </remarks>
-    public static string DisplayVersion { get; } = ReadVersion();
-
-    private static string ReadVersion()
-    {
-        Assembly assembly = typeof(AboutViewModel).Assembly;
-
-        string? informational = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-
-        if (!string.IsNullOrWhiteSpace(informational))
-        {
-            int plus = informational.IndexOf('+', StringComparison.Ordinal);
-            return plus < 0 ? informational : informational[..plus];
-        }
-
-        return assembly.GetName().Version?.ToString(3) ?? "1.0.0";
-    }
+    public static string DisplayVersion => AppVersion.Display;
 }

@@ -16,6 +16,11 @@ independent review at `.claude/review/REVIEW-2026-08-26-independent.md` whose fi
 Treat the plan as the design record rather than a to-do list: where it says a feature is deferred to
 v1.1, that is now history, and the invariants below describe what was actually built.
 
+**On top of that, `feature/embedded-mcp-server` adds a fourth assembly: the same exe run with
+`--mcp` is a headless Model Context Protocol server**, so an agent can drive the restyling pipeline
+without the UI. Five tools and one prompt over stdio, no window and no network. Its spec is at
+`.claude/plan/PLAN-embedded-mcp-server.md`; the architecture and invariants below cover it.
+
 The plan has been reviewed twice and the invariants below are the *outcome* of those reviews, not
 guesses. Several encode a specific failure that was actually reproduced. Treat them as constraints,
 not preferences.
@@ -35,6 +40,9 @@ Restyling is **pitch remapping only** — never rhythm, ornamentation or articul
 dotnet build                                    # whole solution
 dotnet test                                     # all tests - do NOT add --nologo, see below
 dotnet run --project src/MidiRestyle.App        # launch the app (no CLI file argument - open from the File menu)
+
+MIDIRestyle.exe --mcp                           # headless MCP server over stdin/stdout (an agent host spawns this, not you)
+MIDIRestyle.exe --version > v.txt               # prints the version; a WinExe shows nothing on a console without redirection
 
 # a single test / a single class
 dotnet test --filter "FullyQualifiedName~ChannelAllocatorTests"
@@ -67,7 +75,7 @@ contributed. It also has to strip `*.pdb`: SkiaSharp's and HarfBuzz's RID-native
 there and `DebugType=none` does not reach them, since that only governs the App project's own output.
 
 `AssertSingleFilePublish` runs `AfterTargets="Publish"` and fails the build if the folder holds
-anything but one file. Verified: exactly one file, 50.2 MB (47.9 MiB), and it materialises its `scales/` folder
+anything but one file. Verified: exactly one file, 51.2 MB (48.8 MiB), and it materialises its `scales/` folder
 beside itself on first run. Do **not** use `IncludeAllContentForSelfExtract`: it bundles everything
 but repoints `AppContext.BaseDirectory` at the extraction directory, breaking settings-beside-exe.
 
@@ -86,7 +94,7 @@ empty project turns the whole run red.
 All projects target **`net10.0`** (current LTS; .NET 8 leaves support in November 2026). Avalonia
 12.1.1 lists net8.0 as its minimum, not its maximum.
 
-Three assemblies, and the boundaries between them are the important part:
+Four assemblies, and the boundaries between them are the important part:
 
 - **`MidiRestyle.Core`** — the entire domain: pitch model, scale library, key detection, mapping
   strategies, channel allocation, file IO. Has **no UI dependency and never calls
@@ -96,6 +104,11 @@ Three assemblies, and the boundaries between them are the important part:
 - **`MidiRestyle.Playback`** — the only platform-bound assembly. Wraps DryWetMIDI's Multimedia API
   behind `IPlaybackEngine`, with a `NullPlaybackEngine` fallback. DryWetMIDI's device API supports
   Windows and macOS only, **not Linux**; the interface exists so that fact never leaks upward.
+- **`MidiRestyle.Mcp`** — the headless MCP server (`--mcp`): five tools and one prompt over stdio,
+  built on the official `ModelContextProtocol` SDK with **no hosting package**. References Core only,
+  so it is the second headless consumer of Core after the tests — which is why the scale JSON and
+  `PathProbe` live in Core rather than in the App. Stateless per request; the scale library is loaded
+  once per process.
 - **`MidiRestyle.App`** — Avalonia UI, MVVM via CommunityToolkit.Mvvm.
 
 ### The pipeline is non-destructive
@@ -444,6 +457,24 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
   button with no reason - which reads as a broken app. Standing explanations belong in
   `StatusBarViewModel`'s notice slots, not in `Report`.
 
+- **In `--mcp` mode nothing but JSON-RPC frames reaches stdout.** Logs go to stderr through
+  `StderrLoggerFactory`. A single stray `Console.WriteLine` corrupts the session for every client,
+  and it would not fail any unit test — so the stdio E2E test parses every stdout line as JSON-RPC
+  and asserts nothing follows the last frame. `Host.CreateApplicationBuilder` was rejected for this
+  reason: its default console logger writes to stdout.
+- **The MCP tools run the GUI's pipeline, not a copy of it.** `RestyleEngine` → `ChannelAllocator`
+  (the same default ceiling) → `MidiFileExporter`. Two proofs, because one is not enough: the
+  `ResolverParityTests` (in `MidiRestyle.App.Tests`, since it needs the view model) show the
+  resolver and `StylePanelViewModel.BuildSettings` build the same
+  `RestyleSettings`, and `RestyleMidiTests` show the emitted bytes match a direct Core call. Shared
+  defaults live in `RestyleDefaults`; a second copy of any of them is the bug.
+- **Tool arguments are camelCase and enum-like values are strings.** The SDK binds by C# parameter
+  name and applies no naming policy, so snake_case arguments would need snake_case C# identifiers;
+  typed enums would surrender the error text to the binder. Tool *names* stay snake_case.
+  `tools/list` is pinned by a golden (`tests/MidiRestyle.Mcp.Tests/Contract/`) and budgeted at
+  `McpHost.MaxToolListBytes` (12 KB) — it lands in every agent session's context, so it is a cost
+  paid on every turn, not once.
+
 ## Conventions
 
 - **`Playback` must keep all four `Track*` flags on, and this is load-bearing.** DryWetMIDI's
@@ -513,5 +544,8 @@ These are load-bearing. Breaking any of them produces bugs that look like someth
   falling back to `%APPDATA%` when that directory is read-only (read-only USB, Program Files).
   Canonical scale JSON is embedded as an assembly resource *and* written out on first run, so a
   lone copied `.exe` still works.
+  **`MIDIRESTYLE_DATA_ROOT` replaces both roots when set to an absolute path**; the tests and the
+  stdio E2E use it so nothing is written beside the binaries. It lives in `PathProbe`, so settings,
+  the scale editor and the loader all move together.
 - The 72 Carnatic melakarta are **generated** (6 Ri/Ga × 6 Dha/Ni × 2 Ma positions, with Sa=0 and
   Pa=700 fixed), not hand-authored as JSON.

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MidiRestyle.Mcp</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The official MCP C# SDK. Pure managed; no Microsoft.Extensions.Hosting - the server is
+         built with McpServer.Create + StdioServerTransport so nothing but JSON-RPC touches stdout. -->
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../MidiRestyle.Core/MidiRestyle.Core.csproj" />
+  </ItemGroup>
+</Project>

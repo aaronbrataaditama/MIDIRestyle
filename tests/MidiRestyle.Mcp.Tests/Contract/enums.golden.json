@@ -1,0 +1,40 @@
+{
+  "collisions": [
+    "merge",
+    "displaceOctave"
+  ],
+  "exportFailureReason": [
+    "needsPitchBend",
+    "noteOutOfRange"
+  ],
+  "fidelityBadge": [
+    "exact",
+    "close",
+    "approximate",
+    "impossible"
+  ],
+  "format": [
+    "singleTrack",
+    "multiTrack",
+    "multiSequence"
+  ],
+  "keyDetectionOutcome": [
+    "noKeyDetected",
+    "ambiguous",
+    "detected"
+  ],
+  "nonScaleNotes": [
+    "snapToNearestSourceDegree",
+    "passThrough",
+    "drop"
+  ],
+  "range": [
+    "shiftIntoRange",
+    "foldOctave",
+    "drop"
+  ],
+  "strategy": [
+    "scaleDegree",
+    "nearestPitch"
+  ]
+}

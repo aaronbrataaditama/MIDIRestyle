@@ -1,24 +1,21 @@
-using MidiRestyle.App.Services;
 using MidiRestyle.Core.Scales;
 
-namespace MidiRestyle.App.Tests;
+namespace MidiRestyle.Core.Tests;
 
 /// <summary>
 /// Every test points a <see cref="PathProbe"/> at unique temp directories, so nothing here ever
 /// touches the real beside-the-exe folder or the user's actual %APPDATA%. Most tests use a small
-/// synthetic <see cref="IEmbeddedScaleSource"/> so precedence/merge behaviour can be pinned down
-/// exactly; <see cref="Load_assembles_the_real_embedded_assets_into_at_least_170_scales_with_no_id_collisions"/>
-/// and its neighbours load the real nine JSON files straight off disk (bypassing Avalonia's
-/// AssetLoader entirely - see <see cref="AvaloniaEmbeddedScaleSource"/>'s remarks for why that
-/// class itself needs a live Avalonia platform and is not exercised here).
+/// synthetic list of <see cref="EmbeddedScaleAsset"/> so precedence/merge behaviour can be pinned
+/// down exactly; <see cref="Load_assembles_the_real_embedded_assets_into_at_least_170_scales_with_no_id_collisions"/>
+/// and its neighbours load the real embedded assets via <see cref="EmbeddedScaleAssets.ReadAll"/>.
 /// </summary>
-public sealed class ScaleLibraryServiceTests : IDisposable
+public sealed class ScaleLibraryLoaderTests : IDisposable
 {
     private readonly string _tempRoot;
     private readonly string _besideExe;
     private readonly string _appData;
 
-    public ScaleLibraryServiceTests()
+    public ScaleLibraryLoaderTests()
     {
         _tempRoot = Path.Combine(Path.GetTempPath(), "midirestyle-scalelib-tests-" + Guid.NewGuid().ToString("N"));
         _besideExe = Path.Combine(_tempRoot, "beside-exe");
@@ -39,46 +36,13 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         }
     }
 
-    private ScaleLibraryService CreateService(IEmbeddedScaleSource source) =>
-        new(new PathProbe(_besideExe, _appData), source);
+    private ScaleLibraryLoader CreateLoader(params EmbeddedScaleAsset[] embedded) =>
+        new(new PathProbe(_besideExe, _appData), embedded);
 
-    // ---- test doubles -----------------------------------------------------------------
+    private ScaleLibraryLoader CreateLoaderWithRealAssets() =>
+        new(new PathProbe(_besideExe, _appData));
 
-    private sealed class FakeEmbeddedScaleSource(params EmbeddedScaleAsset[] assets) : IEmbeddedScaleSource
-    {
-        public IReadOnlyList<EmbeddedScaleAsset> ReadAll() => assets;
-    }
-
-    /// <summary>
-    /// Reads the real nine shipped scale JSON files straight off disk. Exercises the merge with real
-    /// data without touching Avalonia's asset loader, which - confirmed via a throwaway console app,
-    /// see <see cref="AvaloniaEmbeddedScaleSource"/> - needs a live Avalonia platform a plain xunit
-    /// process does not provide.
-    /// </summary>
-    private sealed class FileSystemEmbeddedScaleSource(string directory) : IEmbeddedScaleSource
-    {
-        public IReadOnlyList<EmbeddedScaleAsset> ReadAll() =>
-            [.. Directory.EnumerateFiles(directory, "*.json")
-                .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
-                .Select(p => new EmbeddedScaleAsset(Path.GetFileName(p), File.ReadAllText(p)))];
-    }
-
-    private static string RealScalesAssetsDirectory()
-    {
-        DirectoryInfo? dir = new(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "MIDIRestyle.slnx")))
-        {
-            dir = dir.Parent;
-        }
-
-        if (dir is null)
-        {
-            throw new InvalidOperationException(
-                $"Could not locate the repo root (MIDIRestyle.slnx) walking up from '{AppContext.BaseDirectory}'.");
-        }
-
-        return Path.Combine(dir.FullName, "src", "MidiRestyle.App", "Assets", "scales");
-    }
+    // ---- test fixtures -----------------------------------------------------------------
 
     private static string ScaleJson(string id, double[]? degreeCents = null, string name = "Test scale") =>
         $$"""
@@ -89,7 +53,7 @@ public sealed class ScaleLibraryServiceTests : IDisposable
           "region": "Test",
           "degreeCents": [{{string.Join(", ", degreeCents ?? [0, 200, 400, 700, 900])}}],
           "notatable": true,
-          "source": "Unit test fixture, ScaleLibraryServiceTests"
+          "source": "Unit test fixture, ScaleLibraryLoaderTests"
         }
         """;
 
@@ -99,18 +63,18 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         """;
 
     private void WriteUserScalesFile(string content) =>
-        File.WriteAllText(Path.Combine(_besideExe, ScaleLibraryService.UserScalesFileName), content);
+        File.WriteAllText(Path.Combine(_besideExe, ScaleLibraryLoader.UserScalesFileName), content);
 
     // ---- real embedded assets -----------------------------------------------------------
 
     [Fact]
     public void Load_assembles_the_real_embedded_assets_into_at_least_170_scales_with_no_id_collisions()
     {
-        var service = CreateService(new FileSystemEmbeddedScaleSource(RealScalesAssetsDirectory()));
+        var loader = CreateLoaderWithRealAssets();
 
-        var result = service.Load();
+        var result = loader.Load();
 
-        result.Library.Count.Should().BeGreaterThanOrEqualTo(170, "99 authored + 72 generated");
+        result.Library.Count.Should().Be(171, "99 authored + 72 generated");
         result.Collisions.Should().BeEmpty();
         result.Failures.Should().BeEmpty("every shipped asset is expected to parse cleanly");
     }
@@ -118,9 +82,9 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_includes_all_72_melakarta()
     {
-        var service = CreateService(new FileSystemEmbeddedScaleSource(RealScalesAssetsDirectory()));
+        var loader = CreateLoaderWithRealAssets();
 
-        var result = service.Load();
+        var result = loader.Load();
 
         for (int mela = MelakartaGenerator.MinMela; mela <= MelakartaGenerator.MaxMela; mela++)
         {
@@ -132,9 +96,9 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_includes_at_least_one_scale_from_each_of_the_nine_asset_files()
     {
-        var service = CreateService(new FileSystemEmbeddedScaleSource(RealScalesAssetsDirectory()));
+        var loader = CreateLoaderWithRealAssets();
 
-        var result = service.Load();
+        var result = loader.Load();
 
         // One known id per shipped file, confirmed against the real assets.
         string[] representativeIds =
@@ -161,16 +125,15 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_lets_a_user_scale_override_a_shipped_scale_of_the_same_id_and_reports_the_collision()
     {
-        var embedded = new FakeEmbeddedScaleSource(
-            new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo", [0, 200, 400, 700, 900]))));
-        var service = CreateService(embedded);
+        var embedded = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo", [0, 200, 400, 700, 900])));
+        var loader = CreateLoader(embedded);
 
         // First load materialises the scales/ folder from the embedded asset.
-        service.Load();
+        loader.Load();
 
         WriteUserScalesFile(LibraryJson(ScaleJson("test.solo", [0, 300, 500, 800, 1000], name: "User's solo")));
 
-        var result = service.Load();
+        var result = loader.Load();
 
         Scale? scale = result.Library.Find("test.solo");
         scale.Should().NotBeNull();
@@ -183,17 +146,16 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_lets_a_beside_exe_scale_override_an_embedded_one_but_lose_to_a_user_scale()
     {
-        var embedded = new FakeEmbeddedScaleSource(
-            new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo", [0, 200, 400, 700, 900]))));
-        var service = CreateService(embedded);
+        var embedded = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo", [0, 200, 400, 700, 900])));
+        var loader = CreateLoader(embedded);
 
         // Materialise the scales/ folder, then hand-edit the copy - the on-disk file now diverges
         // from what the embedded asset would supply.
-        service.Load();
-        string scalesFile = Path.Combine(_besideExe, ScaleLibraryService.ScalesFolderName, "solo.json");
+        loader.Load();
+        string scalesFile = Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName, "solo.json");
         File.WriteAllText(scalesFile, LibraryJson(ScaleJson("test.solo", [0, 100, 300, 600, 900], name: "Edited copy")));
 
-        var afterEdit = service.Load();
+        var afterEdit = loader.Load();
 
         afterEdit.Library.Find("test.solo")!.DegreeCents.Should().Equal(0, 100, 300, 600, 900);
         afterEdit.Library.OriginOf("test.solo").Should().Be(ScaleOrigin.BesideExe);
@@ -201,7 +163,7 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         // Now add a user scale of the same id - it must win over the beside-exe copy.
         WriteUserScalesFile(LibraryJson(ScaleJson("test.solo", [0, 400, 700], name: "User wins")));
 
-        var afterUser = service.Load();
+        var afterUser = loader.Load();
 
         afterUser.Library.Find("test.solo")!.Name.Should().Be("User wins");
         afterUser.Library.OriginOf("test.solo").Should().Be(ScaleOrigin.UserDefined);
@@ -213,21 +175,20 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_writes_the_scales_folder_on_first_run_and_leaves_an_edited_file_alone_on_the_next_run()
     {
-        var embedded = new FakeEmbeddedScaleSource(
-            new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo"))));
-        var service = CreateService(embedded);
+        var embedded = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo")));
+        var loader = CreateLoader(embedded);
 
-        var first = service.Load();
+        var first = loader.Load();
 
-        string scalesFile = Path.Combine(_besideExe, ScaleLibraryService.ScalesFolderName, "solo.json");
-        first.ScalesDirectory.Should().Be(Path.Combine(_besideExe, ScaleLibraryService.ScalesFolderName));
+        string scalesFile = Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName, "solo.json");
+        first.ScalesDirectory.Should().Be(Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName));
         first.ScalesDirectoryIsBesideExe.Should().BeTrue();
         File.Exists(scalesFile).Should().BeTrue("first run must materialise the embedded asset");
 
         string editedContent = LibraryJson(ScaleJson("test.solo", name: "Hand edited"));
         File.WriteAllText(scalesFile, editedContent);
 
-        service.Load();
+        loader.Load();
 
         File.ReadAllText(scalesFile).Should().Be(editedContent, "a second run must not overwrite an edited file");
     }
@@ -240,11 +201,10 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         Directory.Delete(_besideExe);
         File.WriteAllText(_besideExe, "blocking file");
 
-        var embedded = new FakeEmbeddedScaleSource(
-            new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo"))));
-        var service = CreateService(embedded);
+        var embedded = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo")));
+        var loader = CreateLoader(embedded);
 
-        var result = service.Load();
+        var result = loader.Load();
 
         result.ScalesDirectoryIsBesideExe.Should().BeFalse();
         result.ScalesDirectory.Should().StartWith(_appData);
@@ -253,23 +213,34 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         result.Library.Count.Should().BeGreaterThanOrEqualTo(73, "72 melakarta plus the one fake embedded scale");
     }
 
+    [Fact]
+    public void Load_never_throws_and_still_yields_embedded_plus_generated_when_no_root_is_writable()
+    {
+        Directory.Delete(_besideExe); File.WriteAllText(_besideExe, "blocker");
+        Directory.Delete(_appData); File.WriteAllText(_appData, "blocker");
+
+        var result = CreateLoaderWithRealAssets().Load();
+
+        result.Library.Count.Should().Be(171);
+        result.Reason.Should().Contain("not writable");
+    }
+
     // ---- malformed user data must not throw or lose everything else -------------------------
 
     [Fact]
     public void Load_reports_a_stated_reason_and_still_loads_everything_else_when_user_scales_json_is_malformed()
     {
-        var embedded = new FakeEmbeddedScaleSource(
-            new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo"))));
-        var service = CreateService(embedded);
-        service.Load(); // materialise the scales/ folder first
+        var embedded = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo")));
+        var loader = CreateLoader(embedded);
+        loader.Load(); // materialise the scales/ folder first
 
         WriteUserScalesFile("{ this is not valid json ");
 
-        var act = () => service.Load();
+        var act = () => loader.Load();
 
         var result = act.Should().NotThrow().Subject;
         result.Failures.Should().Contain(f =>
-            f.Id.Contains(ScaleLibraryService.UserScalesFileName) && !string.IsNullOrWhiteSpace(f.Reason));
+            f.Id.Contains(ScaleLibraryLoader.UserScalesFileName) && !string.IsNullOrWhiteSpace(f.Reason));
         result.Library.Contains("test.solo").Should().BeTrue();
         result.Library.Count.Should().BeGreaterThanOrEqualTo(73);
     }
@@ -277,7 +248,7 @@ public sealed class ScaleLibraryServiceTests : IDisposable
     [Fact]
     public void Load_reports_a_single_invalid_scale_by_id_while_its_siblings_in_the_same_file_still_load()
     {
-        var service = CreateService(new FakeEmbeddedScaleSource());
+        var loader = CreateLoader();
 
         string goodOne = ScaleJson("user.good-one");
         string goodTwo = ScaleJson("user.good-two", [0, 300, 700]);
@@ -285,11 +256,49 @@ public sealed class ScaleLibraryServiceTests : IDisposable
         string bad = ScaleJson("user.bad", [100, 300, 700]);
         WriteUserScalesFile(LibraryJson(goodOne, goodTwo, bad));
 
-        var result = service.Load();
+        var result = loader.Load();
 
         result.Library.Contains("user.good-one").Should().BeTrue();
         result.Library.Contains("user.good-two").Should().BeTrue();
         result.Library.Contains("user.bad").Should().BeFalse();
         result.Failures.Should().Contain(f => f.Id.Contains("user.bad"));
+    }
+
+    // ---- robustness under concurrency and total unwritability -------------------------------
+
+    [Fact]
+    public void Concurrent_first_runs_produce_complete_files_and_no_failures()
+    {
+        var asset = new EmbeddedScaleAsset("solo.json", LibraryJson(ScaleJson("test.solo")));
+        var results = new ScaleLibraryLoadResult[8];
+
+        Parallel.For(0, results.Length, i => results[i] = CreateLoader(asset).Load());
+
+        results.Should().AllSatisfy(r => r.Failures.Should().BeEmpty());
+        Directory.EnumerateFiles(Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName))
+            .Should().ContainSingle(p => p.EndsWith("solo.json", StringComparison.Ordinal),
+                "no temp files may be left behind");
+    }
+
+    /// <summary>
+    /// <see cref="EmbeddedScaleAssets.ReadAll"/> throws when a manifest resource is listed but will not
+    /// open, and <see cref="ScaleLibraryLoader.Load"/> is documented as never throwing - a contract the
+    /// MCP server's startup depends on. So the read is guarded: the library comes up without the
+    /// embedded tier, saying why, rather than the failure escaping.
+    /// </summary>
+    [Fact]
+    public void Load_reports_a_failure_and_still_returns_a_library_when_the_embedded_assets_cannot_be_read()
+    {
+        var loader = new ScaleLibraryLoader(
+            new PathProbe(_besideExe, _appData),
+            () => throw new InvalidOperationException("Manifest resource 'x.json' listed but not readable."));
+
+        ScaleLibraryLoadResult result = loader.Load();
+
+        result.Failures.Should().ContainSingle()
+            .Which.Reason.Should().Contain("listed but not readable");
+        result.Library.Count.Should().Be(72, "the generated melakarta are unaffected by an embedded-tier failure");
+        Directory.Exists(Path.Combine(_besideExe, ScaleLibraryLoader.ScalesFolderName)).Should().BeTrue(
+            "the writable folder is still resolved and created; there was simply nothing to materialise");
     }
 }

@@ -142,6 +142,8 @@
         </MenuItem>
       </MenuItem>
       <MenuItem Header="_Help">
+        <MenuItem Header="A_gent access (MCP)..." Click="OnAgentAccessClicked" />
+        <Separator />
         <MenuItem Header="_About MIDIRestyle" Click="OnAboutClicked" />
       </MenuItem>
     </Menu>

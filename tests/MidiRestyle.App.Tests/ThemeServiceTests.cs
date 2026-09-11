@@ -2,6 +2,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using MidiRestyle.App.Controls;
 using MidiRestyle.App.Services;
+using MidiRestyle.Core.Scales;
 
 namespace MidiRestyle.App.Tests;
 

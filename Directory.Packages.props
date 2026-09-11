@@ -24,6 +24,12 @@
     <PackageVersion Include="Melanchall.DryWetMidi" Version="8.0.3" />
   </ItemGroup>
 
+  <ItemGroup Label="MCP">
+    <!-- Apache-2.0. Verified on nuget.org 2026-09-03. Transitive: ModelContextProtocol.Core,
+         Microsoft.Extensions.{Caching,Hosting,Logging}.Abstractions, Microsoft.Extensions.AI.Abstractions. -->
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Analyzers">
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
   </ItemGroup>

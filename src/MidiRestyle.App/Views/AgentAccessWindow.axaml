@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MidiRestyle.App.ViewModels"
+        x:Class="MidiRestyle.App.Views.AgentAccessWindow"
+        x:DataType="vm:AgentAccessViewModel"
+        Title="Agent access (MCP)"
+        Icon="avares://MIDIRestyle/Assets/app-icon.ico"
+        Width="640"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+  <!--
+    Deliberately the same chrome as the About box - fixed width, height to content, centred on the
+    owner, not resizable, same icon - because the two are siblings: both are read-once informational
+    dialogs reached from the Help menu, and a pair of Help dialogs that behave differently reads as
+    two different applications. Only the width differs, and for a reason: these snippets are long
+    absolute paths wrapped in JSON, and 480 would wrap every one of them.
+  -->
+  <Window.Styles>
+    <Style Selector="TextBlock.subtle">
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <!-- Every snippet box: read-only, still selectable, monospaced so a path's spaces are visible. -->
+    <Style Selector="TextBox.snippet">
+      <Setter Property="IsReadOnly" Value="True" />
+      <Setter Property="FontFamily" Value="Consolas, Menlo, monospace" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel Margin="22,20">
+
+    <StackPanel DockPanel.Dock="Bottom" Spacing="12" Margin="0,18,0,0">
+
+      <Border BorderThickness="0,1,0,0"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+
+      <Grid ColumnDefinitions="*,Auto">
+        <!--
+          Says whether the copy actually happened. A Copy button that silently does nothing is
+          indistinguishable from a broken application, and a clipboard genuinely can refuse - it is
+          a shared OS resource another process may hold - which is why the failure text names the
+          manual way out rather than just apologising.
+        -->
+        <TextBlock x:Name="CopyStatus" Classes="subtle"
+                   VerticalAlignment="Center" TextWrapping="Wrap"
+                   Text="" IsVisible="False" />
+
+        <Button Grid.Column="1" Content="Close" Click="OnCloseClicked"
+                IsDefault="True" IsCancel="True"
+                HorizontalAlignment="Right" MinWidth="88" />
+      </Grid>
+    </StackPanel>
+
+    <StackPanel Spacing="12">
+
+      <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" LineHeight="19" />
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Claude Code" FontWeight="SemiBold" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Copy" Margin="8,0,0,0" MinWidth="64"
+                  Click="OnCopyClaudeCode" />
+          <TextBox Classes="snippet" Text="{Binding ClaudeCodeCommand}" />
+        </DockPanel>
+      </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Claude Desktop (claude_desktop_config.json)" FontWeight="SemiBold" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Copy" Margin="8,0,0,0" MinWidth="64"
+                  VerticalAlignment="Top" Click="OnCopyClaudeDesktop" />
+          <TextBox Classes="snippet" AcceptsReturn="True" Text="{Binding ClaudeDesktopJson}" />
+        </DockPanel>
+      </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Any other stdio MCP host" FontWeight="SemiBold" />
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Copy" Margin="8,0,0,0" MinWidth="64"
+                  VerticalAlignment="Top" Click="OnCopyGeneric" />
+          <TextBox Classes="snippet" AcceptsReturn="True" Text="{Binding GenericJson}" />
+        </DockPanel>
+      </StackPanel>
+
+    </StackPanel>
+
+  </DockPanel>
+</Window>

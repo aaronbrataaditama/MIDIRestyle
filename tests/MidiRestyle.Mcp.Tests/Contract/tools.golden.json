@@ -1,0 +1,332 @@
+[
+  {
+    "name": "describe_scale",
+    "readOnly": true,
+    "destructive": false,
+    "idempotent": true,
+    "openWorld": false,
+    "required": [
+      "scaleId"
+    ],
+    "properties": {
+      "scaleId": {
+        "type": "string"
+      }
+    }
+  },
+  {
+    "name": "export_musicxml",
+    "readOnly": false,
+    "destructive": true,
+    "idempotent": false,
+    "openWorld": false,
+    "required": [
+      "inputPath",
+      "targetScaleId"
+    ],
+    "properties": {
+      "collisions": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "detectTuplets": {
+        "default": true,
+        "type": "boolean"
+      },
+      "exclude": {
+        "default": null,
+        "items": {
+          "properties": {
+            "channel": {
+              "type": "integer"
+            },
+            "track": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "track",
+            "channel"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "inputPath": {
+        "type": "string"
+      },
+      "nonScaleNotes": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "outputPath": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "overwrite": {
+        "default": false,
+        "type": "boolean"
+      },
+      "range": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sourceScaleId": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sourceTonic": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "strategy": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "targetScaleId": {
+        "type": "string"
+      },
+      "targetTonic": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "toleranceCents": {
+        "default": null,
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    }
+  },
+  {
+    "name": "inspect_midi",
+    "readOnly": true,
+    "destructive": false,
+    "idempotent": true,
+    "openWorld": false,
+    "required": [
+      "inputPath"
+    ],
+    "properties": {
+      "inputPath": {
+        "type": "string"
+      }
+    }
+  },
+  {
+    "name": "list_scales",
+    "readOnly": true,
+    "destructive": false,
+    "idempotent": true,
+    "openWorld": false,
+    "required": [],
+    "properties": {
+      "degreeCount": {
+        "default": null,
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "fitsTwelveTet": {
+        "default": null,
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "limit": {
+        "default": 50,
+        "type": "integer"
+      },
+      "maxDeviationCents": {
+        "default": null,
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "notatable": {
+        "default": null,
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "offset": {
+        "default": 0,
+        "type": "integer"
+      },
+      "query": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "region": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "third": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "tradition": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  },
+  {
+    "name": "restyle_midi",
+    "readOnly": false,
+    "destructive": true,
+    "idempotent": false,
+    "openWorld": false,
+    "required": [
+      "inputPath",
+      "targetScaleId"
+    ],
+    "properties": {
+      "collisions": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "exclude": {
+        "default": null,
+        "items": {
+          "properties": {
+            "channel": {
+              "type": "integer"
+            },
+            "track": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "track",
+            "channel"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "inputPath": {
+        "type": "string"
+      },
+      "nonScaleNotes": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "outputPath": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "overwrite": {
+        "default": false,
+        "type": "boolean"
+      },
+      "range": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sourceScaleId": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sourceTonic": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "strategy": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "targetScaleId": {
+        "type": "string"
+      },
+      "targetTonic": {
+        "default": null,
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "toleranceCents": {
+        "default": null,
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    }
+  }
+]

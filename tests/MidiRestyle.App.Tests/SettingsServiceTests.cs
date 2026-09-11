@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MidiRestyle.App.Services;
+using MidiRestyle.Core.Scales;
 
 namespace MidiRestyle.App.Tests;
 
@@ -127,6 +128,22 @@ public sealed class SettingsServiceTests : IDisposable
         result.Success.Should().BeTrue();
         result.Location.Should().Be(SettingsLocation.AppData);
         File.Exists(Path.Combine(_appData, SettingsService.SettingsFileName)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Save_then_Load_round_trip_under_the_override_root()
+    {
+        string over = Path.Combine(Path.GetDirectoryName(_besideExe)!, "override");
+        var service = new SettingsService(new PathProbe(_besideExe, _appData, over));
+
+        var saved = service.Save(AppSettings.Default with { WindowWidth = 1234 });
+        saved.Success.Should().BeTrue(saved.Reason);
+        saved.Location.Should().Be(SettingsLocation.Override);
+        File.Exists(Path.Combine(over, SettingsService.SettingsFileName)).Should().BeTrue();
+
+        var loaded = service.Load();
+        loaded.Location.Should().Be(SettingsLocation.Override);
+        loaded.Settings.WindowWidth.Should().Be(1234);
     }
 
     private static void WriteSettingsFile(string directory, AppSettings settings)

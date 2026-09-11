@@ -101,8 +101,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// </summary>
     /// <remarks>
     /// Injected rather than constructed here so the window can build it from
-    /// <c>ScaleLibraryService</c> - which needs an initialised Avalonia runtime for its asset
-    /// loader and therefore cannot run inside a plain unit test.
+    /// <see cref="MidiRestyle.Core.Scales.ScaleLibraryLoader"/> and report its filesystem failures
+    /// through the status bar the window owns.
     /// </remarks>
     [ObservableProperty]
     private StylePanelViewModel? _stylePanel;
