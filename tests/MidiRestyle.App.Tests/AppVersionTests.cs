@@ -8,7 +8,7 @@ public class AppVersionTests
     public void DisplayIsTheDeclaredVersionWithoutBuildMetadata()
     {
         // Smoke test: verify the attribute is present and shaped correctly
-        AppVersion.Display.Should().StartWith("1.5");
+        AppVersion.Display.Should().StartWith("1.6");
         AppVersion.Display.Should().NotContain("+");
     }
 
