@@ -15,6 +15,7 @@ that ship with it. Rhythm and phrasing stay exactly as you played them — only 
 ![Windows x64](https://img.shields.io/badge/Windows-x64-4f46e5)
 ![One portable exe](https://img.shields.io/badge/one%20portable%20.exe-no%20installer-4f46e5)
 ![MCP server included](https://img.shields.io/badge/MCP-server%20included-4f46e5)
+[![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/aaronbrataaditama/midirestyle)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-4f46e5)](LICENSE)
 
 <img src="docs/hero.svg" alt="MIDIRestyle's piano roll: the original notes drawn as grey ghosts underneath the restyled notes, with Maqam Rast selected in the scale list" width="880">
